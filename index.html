@@ -1,0 +1,1535 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="CyberHub Arena — gamified ethical hacking and cybersecurity practice range by CyberHub IT Academy.">
+<link rel="icon" href="lockup.png">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>CyberHub Arena</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@500;600;700&family=Rajdhani:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* ============ CyberHub Arena ============
+   Layout: full-screen SPA with three worlds — light brand PORTAL (login + lab catalog),
+   dark 3D RANGE (first-person office), dark OPS CONSOLE (terminal + target panel).
+   Palette derived from the CyberHub logo. */
+:root{
+  /* brand */
+  --crimson:#D1191E; --crimson-hi:#ef2b31; --maroon:#7A0C0E; --ink:#0E0E0E;
+  --canvas:#F6F6F6; --white:#FFFFFF;
+  /* themeable portal surfaces (light default) */
+  --bg:#F2F0F0; --surface:#FFFFFF; --surface-2:#F6F4F4; --surface-3:#ECE9E9;
+  --fg:#17110F; --muted:#6E6563; --faint:#938986; --line:#E3DEDE; --line-2:#D6CFCF;
+  --accent:var(--crimson); --accent-weak:#fbe6e6;
+  --good:#1a8f4c; --warn:#b26a00;
+  /* fixed dark worlds (range + console) — intentional dark environment */
+  --g-bg:#0b0a0b; --g-fog:#0e0b0c; --g-panel:#15110f; --g-panel-2:#1d1715;
+  --g-line:#36282a; --g-fg:#f0e9e7; --g-muted:#a2918f; --g-crimson:#e5332f;
+  --term-bg:#0c0a0b; --term-fg:#d8cfce; --term-dim:#8a7d7c; --term-ok:#36d07a;
+  --term-warn:#ffb020; --term-cri:#ff4d4d; --term-acc:#ff5b5f; --term-cmd:#eef0ff;
+  --radius:14px; --radius-s:10px;
+  --shadow:0 1px 2px rgba(20,8,8,.06),0 8px 26px rgba(20,8,8,.08);
+  --shadow-lg:0 24px 70px rgba(20,8,8,.22);
+  --f-disp:'Chakra Petch',system-ui,sans-serif;
+  --f-ui:'Rajdhani',system-ui,sans-serif;
+  --f-mono:'JetBrains Mono',ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#100c0d; --surface:#171213; --surface-2:#1e1819; --surface-3:#241d1e;
+  --fg:#f3eceb; --muted:#a99f9d; --faint:#8a7f7d; --line:#2c2425; --line-2:#3a2f30;
+  --accent:#ec2a2f; --accent-weak:#2a1516; --good:#3ad17f; --warn:#e8a33a;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5);
+  --shadow-lg:0 24px 70px rgba(0,0,0,.6); color-scheme:dark;
+}}
+:root[data-theme="dark"]{
+  --bg:#100c0d; --surface:#171213; --surface-2:#1e1819; --surface-3:#241d1e;
+  --fg:#f3eceb; --muted:#a99f9d; --faint:#8a7f7d; --line:#2c2425; --line-2:#3a2f30;
+  --accent:#ec2a2f; --accent-weak:#2a1516; --good:#3ad17f; --warn:#e8a33a;
+  --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.5);
+  --shadow-lg:0 24px 70px rgba(0,0,0,.6); color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-ui);
+  font-size:16px;line-height:1.45;-webkit-font-smoothing:antialiased;overflow:hidden}
+h1,h2,h3,h4{font-family:var(--f-disp);margin:0;line-height:1.1;text-wrap:balance;letter-spacing:.2px}
+button{font-family:var(--f-ui);cursor:pointer}
+a{color:var(--accent)}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:6px}
+.tnum{font-variant-numeric:tabular-nums}
+#app{position:fixed;inset:0;height:100%}
+.screen{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
+.gut{padding-left:max(18px,env(safe-area-inset-left,0px));padding-right:max(18px,env(safe-area-inset-right,0px))}
+
+/* ---------- brand bits ---------- */
+.shield{display:block;width:100%;height:100%}
+.mk{display:inline-block;vertical-align:middle;line-height:0}
+.wordmark{font-family:var(--f-disp);font-weight:700;letter-spacing:.3px;line-height:1}
+.wordmark .cy{color:var(--crimson)} .wordmark .it{color:var(--fg)}
+.pill{display:inline-flex;align-items:center;gap:7px;font-family:var(--f-disp);font-weight:600;
+  font-size:11px;letter-spacing:1.4px;text-transform:uppercase;padding:5px 11px;border-radius:999px;
+  border:1px solid var(--line-2);color:var(--muted);background:var(--surface-2)}
+.dot{width:7px;height:7px;border-radius:50%;background:var(--crimson);box-shadow:0 0 0 3px rgba(209,25,30,.18)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;border:none;border-radius:11px;
+  padding:13px 20px;font-weight:700;font-size:15px;letter-spacing:.3px;transition:.16s transform,.16s filter,.16s background}
+.btn:active{transform:translateY(1px)}
+.btn-primary{background:linear-gradient(180deg,var(--crimson-hi),var(--crimson));color:#fff;
+  box-shadow:0 6px 18px rgba(209,25,30,.34)}
+.btn-primary:hover{filter:brightness(1.06)}
+.btn-ghost{background:var(--surface-2);color:var(--fg);border:1px solid var(--line-2)}
+.btn-ghost:hover{background:var(--surface-3)}
+.btn-dark{background:var(--ink);color:#fff}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+
+/* ---------- decorative circuit backdrop (portal) ---------- */
+.circuit{position:absolute;inset:0;pointer-events:none;opacity:.5;z-index:0}
+
+/* ============ LOGIN ============ */
+#login{display:grid;grid-template-columns:1.05fr .95fr;background:var(--bg);z-index:1}
+#login .hero{position:relative;overflow:hidden;background:
+   radial-gradient(130% 100% at 100% 0,rgba(209,25,30,.1),transparent 55%),var(--surface)}
+#login .hero-inner{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;
+  justify-content:center;gap:26px;padding:48px}
+.lockup-img{max-width:430px;width:78%;filter:drop-shadow(0 10px 24px rgba(0,0,0,.14))}
+.hero h1{font-size:clamp(30px,3.5vw,50px);letter-spacing:.4px}
+.hero h1 em{font-style:normal;color:var(--crimson)}
+.hero p{max-width:46ch;color:var(--muted);font-size:17px;margin:0}
+.feat{display:flex;flex-wrap:wrap;gap:10px}
+.feat span{font-family:var(--f-disp);font-size:12px;letter-spacing:.8px;text-transform:uppercase;
+  color:var(--fg);background:var(--surface-2);border:1px solid var(--line-2);padding:8px 12px;border-radius:9px}
+#login .panel{display:flex;flex-direction:column;justify-content:center;align-items:center;
+  padding:40px;gap:4px;background:linear-gradient(180deg,var(--surface),var(--surface-2))}
+.loginCard{width:100%;max-width:380px;background:var(--surface);border:1px solid var(--line);
+  border-radius:var(--radius);box-shadow:var(--shadow);padding:30px}
+.loginCard .mk{width:52px;height:64px;margin-bottom:14px}
+.loginCard h2{font-size:23px}
+.loginCard .sub{color:var(--muted);font-size:14px;margin:4px 0 20px}
+label.fld{display:block;font-family:var(--f-disp);font-size:11.5px;letter-spacing:1.3px;
+  text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+.inp{width:100%;background:var(--surface-2);border:1px solid var(--line-2);border-radius:10px;
+  padding:12px 13px;font-family:var(--f-ui);font-size:15px;color:var(--fg);margin-bottom:15px}
+.inp:focus{outline:none;border-color:var(--crimson);background:var(--surface)}
+.hintline{font-size:13px;color:var(--faint);margin-top:14px;text-align:center}
+.hintline b{color:var(--muted)}
+.topbar{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;justify-content:space-between;
+  padding:14px max(18px,env(safe-area-inset-left)) 14px max(18px,env(safe-area-inset-right));
+  z-index:5;font-size:12.5px;color:var(--muted)}
+.topbar .brandmini{display:flex;align-items:center;gap:9px;font-family:var(--f-disp);font-weight:700;letter-spacing:.3px}
+.topbar .brandmini .mk{width:22px;height:27px}
+
+/* ============ DASHBOARD ============ */
+#dash{background:var(--bg);z-index:1}
+.dhead{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;background:color-mix(in srgb,var(--surface) 88%,transparent);
+  backdrop-filter:blur(10px);border-bottom:1px solid var(--line)}
+.dhead-in{display:flex;align-items:center;gap:16px;padding-top:12px;padding-bottom:12px;max-width:1180px;margin:0 auto}
+.dhead .mk{width:30px;height:37px;flex:none}
+.dhead .wm{font-size:19px}
+.dhead .spacer{flex:1}
+.acct{display:flex;align-items:center;gap:12px;font-size:13.5px;color:var(--muted)}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--crimson),var(--maroon));
+  color:#fff;display:grid;place-items:center;font-family:var(--f-disp);font-weight:700;font-size:14px}
+.dwrap{max-width:1180px;margin:0 auto;padding-top:26px;padding-bottom:70px}
+.validbar{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;justify-content:space-between;
+  background:linear-gradient(100deg,var(--ink),#241416);color:#f3eaea;border-radius:12px;
+  padding:13px 18px;margin-bottom:24px;font-size:13.5px}
+.validbar b{color:#fff} .validbar .ok{color:#ff8f92;font-weight:700}
+.progStrip{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.progStrip .bar{flex:1;min-width:160px;height:9px;border-radius:999px;background:rgba(255,255,255,.14);overflow:hidden}
+.progStrip .bar>i{display:block;height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--crimson),#ff7a3c);transition:width .5s}
+.sect-h{display:flex;align-items:baseline;gap:12px;margin:30px 0 14px}
+.sect-h h2{font-size:22px}
+.sect-h .rule{flex:1;height:1px;background:var(--line)}
+.sect-h .cnt{font-size:12.5px;color:var(--faint);font-family:var(--f-mono)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
+.chip{font-family:var(--f-disp);font-size:12px;letter-spacing:.6px;text-transform:uppercase;
+  padding:7px 13px;border-radius:999px;border:1px solid var(--line-2);background:var(--surface);color:var(--muted)}
+.chip[aria-pressed="true"]{background:var(--ink);color:#fff;border-color:var(--ink)}
+.labgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:16px}
+.lab{position:relative;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+  padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:var(--shadow);transition:.16s transform,.16s border-color}
+.lab:hover{transform:translateY(-3px);border-color:var(--line-2)}
+.lab.flag{border-color:rgba(209,25,30,.4);box-shadow:0 10px 30px rgba(209,25,30,.14)}
+.lab .lab-top{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.lab .ico{width:42px;height:42px;border-radius:11px;display:grid;place-items:center;flex:none;
+  background:var(--accent-weak);color:var(--crimson)}
+.lab.flag .ico{background:linear-gradient(135deg,var(--crimson),var(--maroon));color:#fff}
+.lab .ico svg{width:23px;height:23px}
+.lab h3{font-size:17.5px}
+.lab .track{font-family:var(--f-disp);font-size:10.5px;letter-spacing:1px;text-transform:uppercase;color:var(--faint);margin-top:2px}
+.lab p{font-size:14px;color:var(--muted);margin:0;flex:1}
+.lab .meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:11.5px}
+.tag{font-family:var(--f-disp);letter-spacing:.5px;text-transform:uppercase;padding:4px 9px;border-radius:7px;
+  border:1px solid var(--line-2);color:var(--muted);background:var(--surface-2)}
+.tag.beg{color:#1a8f4c;border-color:#bfe6cd;background:#eef9f1}
+.tag.int{color:#b26a00;border-color:#eccf9f;background:#fbf2e3}
+.tag.adv{color:var(--crimson);border-color:#eccacb;background:#fbe9ea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .tag.beg{background:#122017;border-color:#1f3a2a;color:#4fd98a}
+ :root:not([data-theme="light"]) .tag.int{background:#231a0d;border-color:#3d2e12;color:#e8a33a}
+ :root:not([data-theme="light"]) .tag.adv{background:#24151600;background:#2a1314;border-color:#4a2224;color:#ff6b6e}}
+.lab .barmini{height:7px;border-radius:999px;background:var(--surface-3);overflow:hidden}
+.lab .barmini>i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--crimson),#ff7a3c);transition:width .4s}
+.lab .foot{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.lab .pc{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.lab .go{padding:9px 16px;font-size:13.5px;border-radius:9px}
+.ribbon{position:absolute;top:13px;right:-30px;transform:rotate(45deg);background:var(--crimson);color:#fff;
+  font-family:var(--f-disp);font-size:10px;letter-spacing:1.4px;padding:3px 34px;box-shadow:0 2px 8px rgba(0,0,0,.2)}
+
+/* ============ RANGE (3D) ============ */
+#range{background:var(--g-bg);z-index:2}
+#rangeCanvas{position:absolute;inset:0;display:block;width:100%;height:100%}
+.r-ov{position:absolute;z-index:4;pointer-events:none}
+.hud-top{top:env(safe-area-inset-top,0px);left:0;right:0;display:flex;justify-content:center;padding:14px 12px}
+.obj{pointer-events:none;max-width:min(680px,94vw);display:flex;align-items:center;gap:12px;
+  background:rgba(14,10,11,.72);border:1px solid var(--g-line);border-radius:12px;
+  padding:9px 15px;backdrop-filter:blur(8px);box-shadow:0 10px 30px rgba(0,0,0,.4)}
+.obj .dotp{width:8px;height:8px;border-radius:50%;background:var(--g-crimson);flex:none;
+  box-shadow:0 0 0 4px rgba(229,51,47,.2);animation:pulse 1.8s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 8px rgba(229,51,47,0)}}
+.obj .otxt{color:var(--g-fg);font-size:14.5px;font-weight:600;letter-spacing:.2px}
+.obj .otxt b{color:var(--g-crimson)}
+.hud-right{top:calc(env(safe-area-inset-top,0px) + 66px);right:max(14px,env(safe-area-inset-right,0px));width:230px;display:flex;flex-direction:column;gap:10px}
+.idcard,.progcard{pointer-events:none;background:rgba(21,17,15,.82);border:1px solid var(--g-line);
+  border-radius:12px;padding:12px 14px;backdrop-filter:blur(8px)}
+.idcard .k{font-family:var(--f-disp);font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--g-muted)}
+.idcard .v{font-family:var(--f-mono);font-size:14px;color:var(--g-fg);margin-top:3px;word-break:break-all}
+.idcard .v .lvl{color:var(--term-ok)}
+.progcard .row{display:flex;justify-content:space-between;align-items:center;margin-bottom:7px}
+.progcard .row .k{font-family:var(--f-disp);font-size:10px;letter-spacing:1.4px;text-transform:uppercase;color:var(--g-muted)}
+.progcard .row .pc{font-family:var(--f-mono);font-size:17px;font-weight:700;color:var(--g-crimson)}
+.progcard .bar{height:8px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden}
+.progcard .bar>i{display:block;height:100%;width:0;border-radius:999px;
+  background:linear-gradient(90deg,var(--g-crimson),#ff8a3c);transition:width .5s}
+.hud-bot{bottom:calc(env(safe-area-inset-bottom,0px) + 12px);left:0;right:0;display:flex;justify-content:center;padding:0 12px}
+.keys{pointer-events:none;display:flex;flex-wrap:wrap;gap:8px 14px;justify-content:center;
+  background:rgba(14,10,11,.6);border:1px solid var(--g-line);border-radius:10px;padding:8px 14px;backdrop-filter:blur(6px)}
+.keys span{font-size:12.5px;color:var(--g-muted);display:inline-flex;align-items:center;gap:6px}
+.kbd{font-family:var(--f-mono);font-size:11px;color:var(--g-fg);background:#2a2022;border:1px solid var(--g-line);
+  border-bottom-width:2px;border-radius:6px;padding:2px 7px;min-width:20px;text-align:center}
+.prompt-int{left:50%;top:56%;transform:translate(-50%,-50%);text-align:center;pointer-events:none}
+.prompt-int .big{display:inline-flex;align-items:center;gap:10px;background:rgba(14,10,11,.8);
+  border:1px solid var(--g-crimson);border-radius:12px;padding:11px 18px;color:#fff;font-weight:700;font-size:16px;
+  box-shadow:0 0 30px rgba(229,51,47,.3)}
+.prompt-int .big .kbd{font-size:13px;background:var(--g-crimson);border-color:#ff7a7a}
+.reticle{left:50%;top:50%;width:7px;height:7px;margin:-3.5px;border-radius:50%;
+  background:rgba(255,255,255,.75);box-shadow:0 0 0 1.5px rgba(0,0,0,.4);pointer-events:none}
+.lockmsg{inset:0;display:flex;align-items:center;justify-content:center;pointer-events:auto;cursor:pointer;
+  background:radial-gradient(60% 60% at 50% 45%,rgba(11,10,11,.3),rgba(11,10,11,.78))}
+.lockmsg .inner{text-align:center;color:var(--g-fg)}
+.lockmsg .ring{width:58px;height:58px;border-radius:50%;border:2px solid var(--g-crimson);margin:0 auto 14px;
+  display:grid;place-items:center;animation:spin 6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.lockmsg h3{font-size:20px;margin-bottom:6px}
+.lockmsg p{color:var(--g-muted);font-size:14px;max-width:34ch;margin:0 auto}
+.r-exit{top:calc(env(safe-area-inset-top,0px) + 14px);left:max(14px,env(safe-area-inset-left,0px));pointer-events:auto}
+.r-exit button{background:rgba(21,17,15,.82);border:1px solid var(--g-line);color:var(--g-fg);
+  border-radius:10px;padding:8px 13px;font-size:13px;font-weight:600;backdrop-filter:blur(8px)}
+.console-fab{bottom:calc(env(safe-area-inset-bottom,0px) + 64px);right:max(14px,env(safe-area-inset-right,0px));pointer-events:auto}
+.console-fab button{display:flex;align-items:center;gap:9px;background:linear-gradient(180deg,var(--crimson-hi),var(--crimson));
+  color:#fff;border:none;border-radius:12px;padding:12px 17px;font-weight:700;font-size:14px;
+  box-shadow:0 10px 26px rgba(229,51,47,.4)}
+.console-fab button:disabled{background:#2a2022;color:#766;box-shadow:none}
+
+/* touch controls */
+.touchpad{position:absolute;z-index:5;pointer-events:auto;display:none}
+.dpad{left:calc(14px + env(safe-area-inset-left,0px));bottom:calc(16px + env(safe-area-inset-bottom,0px));
+  width:150px;height:150px}
+.dpad button{position:absolute;width:48px;height:48px;border-radius:12px;background:rgba(21,17,15,.8);
+  border:1px solid var(--g-line);color:var(--g-fg);font-size:18px;display:grid;place-items:center}
+.dpad .up{left:51px;top:0}.dpad .dn{left:51px;bottom:0}.dpad .lf{left:0;top:51px}.dpad .rt{right:0;top:51px}
+.tE{right:calc(16px + env(safe-area-inset-right,0px));bottom:calc(120px + env(safe-area-inset-bottom,0px));
+  width:60px;height:60px;border-radius:50%;background:rgba(229,51,47,.9);border:1px solid #ff8a8a;color:#fff;
+  font-weight:700;font-size:18px}
+body.touch .touchpad{display:block}
+
+/* ============ OPS CONSOLE ============ */
+#console{position:absolute;inset:0;z-index:20;display:none;background:rgba(6,5,6,.55);backdrop-filter:blur(3px)}
+#console.open{display:flex}
+.cwin{margin:auto;width:min(1100px,96vw);height:min(90vh,780px);display:flex;flex-direction:column;
+  background:var(--g-panel);border:1px solid var(--g-line);border-radius:16px;overflow:hidden;box-shadow:var(--shadow-lg)}
+.cbar{display:flex;align-items:center;gap:12px;padding:11px 16px;background:#120e0d;border-bottom:1px solid var(--g-line)}
+.cbar .dots{display:flex;gap:7px}.cbar .dots i{width:11px;height:11px;border-radius:50%;background:#43343a}
+.cbar .dots i:first-child{background:#e5484d}.cbar .dots i:nth-child(2){background:#e5a23a}.cbar .dots i:nth-child(3){background:#3ad17f}
+.cbar .ttl{font-family:var(--f-mono);font-size:13px;color:var(--g-fg)}
+.cbar .ttl b{color:var(--g-crimson)}
+.cbar .spacer{flex:1}
+.cbar .cpc{font-family:var(--f-mono);font-size:12.5px;color:var(--term-ok)}
+.cbar .xbtn{background:transparent;border:1px solid var(--g-line);color:var(--g-muted);border-radius:8px;
+  width:30px;height:30px;font-size:16px;display:grid;place-items:center}
+.cbody{flex:1;display:grid;grid-template-columns:minmax(0,1fr) 330px;grid-template-rows:minmax(0,1fr);min-height:0}
+.term{min-width:0;min-height:0;display:flex;flex-direction:column;background:var(--term-bg)}
+.termOut{flex:1 1 auto;min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:#4a3a3b transparent;padding:16px 18px;font-family:var(--f-mono);font-size:13px;line-height:1.5;color:var(--term-fg)}
+.termOut .ln{white-space:pre-wrap;word-break:break-word}
+.termOut .cmd{color:var(--term-cmd)} .termOut .pr{color:var(--term-acc);font-weight:700}
+.termOut .ok{color:var(--term-ok)} .termOut .warn{color:var(--term-warn)} .termOut .cri{color:var(--term-cri)}
+.termOut .dim{color:var(--term-dim)} .termOut .acc{color:var(--term-acc)} .termOut .flag{color:#ffd166;font-weight:700}
+.termOut .teach{color:#7fb0ff} .termOut .def{color:#5fd6a0}
+.termOut .hd{color:#fff;font-weight:700}
+.terminput{display:flex;align-items:center;gap:8px;border-top:1px solid var(--g-line);padding:10px 16px;background:#0a0809}
+.terminput .ps{font-family:var(--f-mono);font-size:13px;color:var(--term-acc);font-weight:700;white-space:nowrap}
+.terminput input{flex:1;min-width:0;background:transparent;border:none;outline:none;color:var(--term-cmd);
+  font-family:var(--f-mono);font-size:13px}
+.side{border-left:1px solid var(--g-line);background:var(--g-panel-2);display:flex;flex-direction:column;min-height:0}
+.side .sh{padding:12px 15px;border-bottom:1px solid var(--g-line);display:flex;align-items:center;justify-content:space-between}
+.side .sh h4{font-size:13px;letter-spacing:.8px;text-transform:uppercase;color:var(--g-fg)}
+.side .sh .mono{font-family:var(--f-mono);font-size:11px;color:var(--g-muted)}
+.targets{overflow-y:auto;min-height:0;overscroll-behavior:contain;padding:12px;display:flex;flex-direction:column;gap:11px;flex:1}
+.tcard{background:var(--g-panel);border:1px solid var(--g-line);border-radius:12px;padding:12px;transition:.2s}
+.tcard.owned{border-color:#2e6b45;background:#101c14}
+.tcard .tt{display:flex;align-items:center;gap:8px;justify-content:space-between}
+.tcard .nm{font-family:var(--f-mono);font-size:13px;color:var(--g-fg);font-weight:700}
+.tcard .nm .ip{color:var(--g-muted);font-weight:400}
+.tcard .st{font-family:var(--f-disp);font-size:9.5px;letter-spacing:1px;text-transform:uppercase;
+  padding:3px 8px;border-radius:6px;border:1px solid var(--g-line);color:var(--g-muted)}
+.tcard .st.scan{color:var(--term-warn);border-color:#4a3a1a}
+.tcard .st.pwn{color:var(--term-ok);border-color:#2e6b45}
+.tcard .desc{font-size:12px;color:var(--g-muted);margin:7px 0 0;line-height:1.4}
+.tcard .svc{font-family:var(--f-mono);font-size:11px;color:var(--term-dim);margin-top:6px;white-space:pre-wrap}
+.tcard .cap{display:flex;gap:6px;margin-top:9px}
+.tcard .cap input{flex:1;min-width:0;background:var(--term-bg);border:1px solid var(--g-line);border-radius:8px;
+  padding:7px 9px;font-family:var(--f-mono);font-size:11.5px;color:var(--term-fg)}
+.tcard .cap button{background:var(--crimson);color:#fff;border:none;border-radius:8px;padding:7px 12px;font-weight:700;font-size:12px}
+.tcard .cap button:disabled{background:#2a2022;color:#766}
+.tcard .capdone{font-family:var(--f-mono);font-size:11.5px;color:var(--term-ok);margin-top:8px;word-break:break-all}
+.side .sfoot{border-top:1px solid var(--g-line);padding:10px 12px;display:flex;gap:8px}
+.side .sfoot button{flex:1;background:var(--g-panel);border:1px solid var(--g-line);color:var(--g-fg);
+  border-radius:9px;padding:8px;font-size:12.5px;font-weight:600}
+.side .sfoot button:hover{background:var(--g-bg)}
+.empty{color:var(--g-muted);font-size:12.5px;text-align:center;padding:24px 12px;line-height:1.5}
+
+/* quiz labs */
+.quizwrap{max-width:720px;margin:0 auto;padding:22px 2px 60px}
+.qcard{background:var(--g-panel);border:1px solid var(--g-line);border-radius:14px;padding:20px;margin-bottom:14px}
+.qcard .qq{font-size:16px;color:var(--g-fg);font-weight:600;margin-bottom:6px}
+.qcard .qctx{font-family:var(--f-mono);font-size:12.5px;color:var(--g-muted);background:var(--term-bg);
+  border:1px solid var(--g-line);border-radius:9px;padding:10px;margin:10px 0;white-space:pre-wrap;overflow-x:auto}
+.qopts{display:flex;flex-direction:column;gap:8px}
+.qopt{text-align:left;background:var(--g-panel-2);border:1px solid var(--g-line);color:var(--g-fg);
+  border-radius:10px;padding:11px 13px;font-size:14px}
+.qopt:hover{border-color:var(--g-muted)}
+.qopt.right{border-color:#2e6b45;background:#0f1d14;color:#8ef0b4}
+.qopt.wrong{border-color:#6b2e2e;background:#1d0f0f;color:#f0a0a0}
+.qfb{font-size:13px;margin-top:10px;color:var(--term-ok)}.qfb.bad{color:var(--term-cri)}
+
+/* win */
+#win{position:absolute;inset:0;z-index:40;display:none;align-items:center;justify-content:center;
+  background:radial-gradient(70% 70% at 50% 40%,#2a0d0e,#0b0708 70%)}
+#win.open{display:flex}
+.wincard{text-align:center;max-width:560px;padding:40px;animation:rise .6s ease both}
+@keyframes rise{from{opacity:0;transform:translateY(16px)}}
+.wincard .mk{width:84px;height:104px;margin:0 auto 18px}
+.wincard .owned{font-family:var(--f-disp);font-size:13px;letter-spacing:4px;color:var(--g-crimson);text-transform:uppercase}
+.wincard h1{font-size:clamp(30px,6vw,52px);color:#fff;margin:8px 0 4px}
+.wincard h1 .x{color:var(--g-crimson)}
+.wincard p{color:#d8c6c6;font-size:16px;margin:12px auto 24px;max-width:44ch}
+.wincard .stats{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:26px}
+.wincard .stat{background:rgba(255,255,255,.05);border:1px solid var(--g-line);border-radius:12px;padding:12px 18px;min-width:96px}
+.wincard .stat .n{font-family:var(--f-disp);font-size:26px;color:#fff}
+.wincard .stat .l{font-size:11px;letter-spacing:1px;text-transform:uppercase;color:var(--g-muted)}
+.wincard .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+
+/* toast */
+#toast{position:fixed;left:50%;bottom:calc(26px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);
+  z-index:60;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}
+.toast{background:var(--ink);color:#fff;border:1px solid #3a2a2b;border-radius:11px;padding:11px 17px;
+  font-size:14px;font-weight:600;box-shadow:var(--shadow-lg);animation:tin .3s both}
+.toast.good{border-color:#2e6b45}.toast.good b{color:#4fd98a}
+.toast.bad{border-color:#6b2e2e}.toast.bad b{color:#ff8f92}
+@keyframes tin{from{opacity:0;transform:translateY(10px)}}
+
+/* responsive */
+@media (max-width:900px){
+  #login{grid-template-columns:1fr}
+  #login .hero{display:none}
+  #login .panel{min-height:100%}
+  .cbody{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr) minmax(0,38%)}
+  .side{border-left:none;border-top:1px solid var(--g-line)}
+  .hud-right{display:none}
+}
+@media (max-width:560px){
+  body{font-size:15px}
+  .dhead .wm{display:none}
+  .labgrid{grid-template-columns:1fr}
+  .cwin{height:94vh;width:100vw;border-radius:0}
+  .keys{display:none}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+
+
+<div id="app">
+  <!-- ============ LOGIN ============ -->
+  <section class="screen" id="login">
+    <div class="topbar">
+      <div class="brandmini"><span class="mk" id="mk-top"></span> CyberHub <span style="color:var(--crimson)">Arena</span></div>
+      <div>Authorized training environment</div>
+    </div>
+    <div class="hero">
+      <canvas class="circuit" id="circuit1"></canvas>
+      <div class="hero-inner">
+        <img class="lockup-img" id="lockup" alt="CyberHub IT Academy">
+        <h1>Learn offense. <em>Master defense.</em></h1>
+        <p>A gamified cyber range where you walk into a virtual company, think like an attacker, and
+           learn exactly how real intrusions happen — so you can stop them. Every lab is a safe,
+           simulated practice target.</p>
+        <div class="feat">
+          <span>Recon</span><span>Scanning</span><span>Enumeration</span>
+          <span>Exploitation</span><span>Privilege Escalation</span><span>Blue Team</span>
+        </div>
+      </div>
+    </div>
+    <div class="panel gut">
+      <form class="loginCard" id="loginForm" autocomplete="off">
+        <span class="mk" id="mk-login"></span>
+        <h2>Student sign in</h2>
+        <div class="sub">Use the credentials issued with your CyberHub batch.</div>
+        <label class="fld" for="u">Username</label>
+        <input class="inp" id="u" name="u" placeholder="student.name" value="demo.student">
+        <label class="fld" for="p">Password</label>
+        <input class="inp" id="p" name="p" type="password" placeholder="••••••••" value="cyberhub">
+        <button class="btn btn-primary" type="submit" style="width:100%">Enter the Range →</button>
+        <div class="hintline">Demo access · <b>demo.student</b> / <b>cyberhub</b></div>
+      </form>
+    </div>
+  </section>
+
+  <!-- ============ DASHBOARD ============ -->
+  <section class="screen" id="dash" hidden>
+    <div class="dhead gut">
+      <div class="dhead-in">
+        <span class="mk" id="mk-dash"></span>
+        <span class="wordmark wm"><span class="cy">CyberHub</span> <span class="it">Arena</span></span>
+        <span class="spacer"></span>
+        <div class="acct">
+          <span id="whoami" class="tnum"></span>
+          <span class="avatar" id="avatar">S</span>
+          <button class="btn btn-ghost" id="logout" style="padding:8px 13px;font-size:13px">Logout</button>
+        </div>
+      </div>
+    </div>
+    <div class="dwrap gut">
+      <div class="validbar">
+        <div>🎓 Lab access valid until <b>2026-12-31</b> · <span class="ok">79 days left</span></div>
+        <div class="progStrip">
+          <span style="font-size:12.5px;color:#e9d6d6">Overall mastery</span>
+          <div class="bar"><i id="overallBar"></i></div>
+          <b class="tnum" id="overallPc">0%</b>
+        </div>
+      </div>
+
+      <div class="sect-h"><h2>Flagship range</h2><span class="rule"></span></div>
+      <div class="labgrid" id="flagGrid"></div>
+
+      <div class="sect-h"><h2>Skill labs</h2><span class="rule"></span><span class="cnt" id="labCount"></span></div>
+      <div class="filters" id="filters"></div>
+      <div class="labgrid" id="labGrid"></div>
+    </div>
+  </section>
+
+  <!-- ============ RANGE (3D) ============ -->
+  <section class="screen" id="range" hidden style="overflow:hidden">
+    <canvas id="rangeCanvas"></canvas>
+    <div class="r-ov hud-top"><div class="obj"><span class="dotp"></span><span class="otxt" id="objText">—</span></div></div>
+    <div class="r-ov hud-right">
+      <div class="idcard"><div class="k">Session identity</div><div class="v" id="idText">intern · <span class="lvl">low-priv</span></div></div>
+      <div class="progcard">
+        <div class="row"><span class="k">Range progress</span><span class="pc tnum" id="rPc">0%</span></div>
+        <div class="bar"><i id="rBar"></i></div>
+      </div>
+    </div>
+    <div class="r-ov reticle" id="reticle"></div>
+    <div class="r-ov prompt-int" id="promptInt" hidden><div class="big"><span class="kbd">E</span> <span id="promptTxt">Interact</span></div></div>
+    <div class="r-ov hud-bot"><div class="keys">
+      <span><span class="kbd">W</span><span class="kbd">A</span><span class="kbd">S</span><span class="kbd">D</span> move</span>
+      <span><span class="kbd">Mouse</span> look</span><span><span class="kbd">E</span> interact</span>
+      <span><span class="kbd">Tab</span> console</span><span><span class="kbd">Shift</span> run</span><span><span class="kbd">Esc</span> release</span>
+    </div></div>
+    <div class="r-ov r-exit"><button id="rExit">← Exit range</button></div>
+    <div class="r-ov console-fab"><button id="fabConsole" disabled>⌘ Ops Console <span class="kbd" style="background:#3a2a2b;border-color:#4a3a3b">Tab</span></button></div>
+    <div class="r-ov lockmsg" id="lockMsg">
+      <div class="inner"><div class="ring"><span class="mk" style="width:26px;height:32px"></span></div>
+      <h3>Click to look around</h3><p>Click once to capture the mouse — or just click and drag to look. Walk with W A S D. Press Esc to release the cursor.</p></div>
+    </div>
+    <!-- touch controls -->
+    <div class="touchpad dpad">
+      <button class="up" data-mv="f">▲</button><button class="dn" data-mv="b">▼</button>
+      <button class="lf" data-mv="l">◀</button><button class="rt" data-mv="r">▶</button>
+    </div>
+    <button class="touchpad tE" id="tEbtn">E</button>
+  </section>
+
+  <!-- ============ OPS CONSOLE ============ -->
+  <div id="console">
+    <div class="cwin">
+      <div class="cbar">
+        <div class="dots"><i></i><i></i><i></i></div>
+        <div class="ttl" id="cTitle"><b>kali</b>@cyberhub: live-fire</div>
+        <div class="spacer"></div>
+        <div class="cpc">progress <span id="cPc" class="tnum">0%</span></div>
+        <button class="xbtn" id="cClose" title="Close (Tab)">✕</button>
+      </div>
+      <div class="cbody">
+        <div class="term">
+          <div class="termOut" id="termOut"></div>
+          <div class="terminput"><span class="ps" id="termPrompt">ER-Kali:~$</span>
+            <input id="termIn" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="type a command — try: help"></div>
+        </div>
+        <aside class="side">
+          <div class="sh"><h4>Targets in scope</h4><span class="mono" id="scopeNet">—</span></div>
+          <div class="targets" id="targets"><div class="empty">No hosts yet.<br>Run <b style="color:#ff8a8a">nmap -sn</b> on the subnet to discover machines, then scan and work each one.</div></div>
+          <div class="sfoot">
+            <button id="btnHint">💡 Hint</button>
+            <button id="btnObjectives">🎯 Objectives</button>
+            <button id="btnReset">↺ Reset lab</button>
+          </div>
+        </aside>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ WIN ============ -->
+  <div id="win"><div class="wincard">
+    <span class="mk"></span>
+    <div class="owned">Objective complete</div>
+    <h1 id="winTitle">Domain <span class="x">Owned</span></h1>
+    <p id="winMsg"></p>
+    <div class="stats">
+      <div class="stat"><div class="n tnum" id="wsMachines">0</div><div class="l">Hosts owned</div></div>
+      <div class="stat"><div class="n tnum" id="wsFlags">0</div><div class="l">Flags captured</div></div>
+      <div class="stat"><div class="n tnum">100%</div><div class="l">Completion</div></div>
+    </div>
+    <div class="btns">
+      <button class="btn btn-primary" id="winDash">Back to labs</button>
+      <button class="btn btn-ghost" id="winReplay" style="color:#eee;border-color:#4a3a3b">Replay range</button>
+    </div>
+  </div></div>
+
+  <div id="toast"></div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js" } }
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+
+/* ============================================================
+   CyberHub Arena — single-file training simulation
+   Educational: real workflow & command syntax, simulated targets,
+   fake flags, defender's notes. Nothing here touches real systems.
+   ============================================================ */
+
+const $ = s=>document.querySelector(s);
+const $$ = s=>[...document.querySelectorAll(s)];
+const esc = s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------- brand shield (inline SVG) ---------- */
+const SHIELD = `<svg class="shield" viewBox="0 0 100 124" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<path d="M50 4 L92 16 Q96 17 96 22 L96 66 Q96 99 54 119 Q50 121 46 119 Q4 99 4 66 L4 22 Q4 17 8 16 Z" fill="#7A0C0E"/>
+<path d="M50 4 L92 16 Q96 17 96 22 L96 66 Q96 99 54 119 Q50 121 46 119 Q4 99 4 66 L4 22 Q4 17 8 16 Z" fill="#fff" transform="translate(50 60) scale(.9) translate(-50 -60)"/>
+<path d="M50 4 L92 16 Q96 17 96 22 L96 66 Q96 99 54 119 Q50 121 46 119 Q4 99 4 66 L4 22 Q4 17 8 16 Z" fill="none" stroke="#0E0E0E" stroke-width="1.6" transform="translate(50 60) scale(.8) translate(-50 -60)"/>
+<path d="M27 52 L50 36 L73 52" fill="none" stroke="#0E0E0E" stroke-width="7" stroke-linejoin="round" stroke-linecap="round"/>
+<rect x="63" y="38" width="5" height="11" fill="#0E0E0E"/>
+<path d="M42 61 V56 a8 8 0 0 1 16 0 V61" fill="none" stroke="#D1191E" stroke-width="5"/>
+<rect x="37" y="61" width="26" height="20" rx="3" fill="#D1191E"/>
+<circle cx="50" cy="69" r="3.3" fill="#fff"/><path d="M48.4 70 L51.6 70 L52.6 77 L47.4 77 Z" fill="#fff"/>
+<g stroke="#0E0E0E" stroke-width="1.7" fill="none" stroke-linecap="round">
+<path d="M50 81 V87"/><path d="M50 87 H39 V93"/><path d="M50 87 H61 V93"/><path d="M50 87 V95"/>
+<path d="M44 84 H33 V91"/><path d="M56 84 H67 V91"/></g>
+<g fill="#D1191E"><circle cx="33" cy="92" r="2.2"/><circle cx="39" cy="94" r="2.2"/><circle cx="50" cy="96" r="2.2"/><circle cx="61" cy="94" r="2.2"/><circle cx="67" cy="92" r="2.2"/></g>
+</svg>`;
+$$('.mk').forEach(e=>e.innerHTML=SHIELD);
+$('.wincard .mk').innerHTML=SHIELD;
+$('#lockup').src='lockup.png';
+$('#mk-top').innerHTML=SHIELD;
+
+/* ---------- decorative circuit canvas ---------- */
+function circuit(cv){
+  if(!cv) return; const ctx=cv.getContext('2d'); let w,h;
+  function rs(){w=cv.width=cv.offsetWidth*devicePixelRatio;h=cv.height=cv.offsetHeight*devicePixelRatio;draw();}
+  function draw(){
+    ctx.clearRect(0,0,w,h); ctx.lineWidth=1.3*devicePixelRatio;
+    const cols=Math.max(5,Math.floor(w/ (150*devicePixelRatio)));
+    for(let i=0;i<cols*3;i++){
+      const y=Math.random()*h, x0=Math.random()*w*.2, len=w*(.2+Math.random()*.5);
+      ctx.strokeStyle='rgba(209,25,30,'+(0.05+Math.random()*0.12)+')';
+      ctx.beginPath();ctx.moveTo(x0,y);
+      let x=x0,cy=y; const segs=2+Math.floor(Math.random()*3);
+      for(let s=0;s<segs;s++){x+=len/segs; ctx.lineTo(x,cy); cy+= (Math.random()<.5?-1:1)*(20+Math.random()*40)*devicePixelRatio; ctx.lineTo(x,cy);}
+      ctx.stroke();
+      ctx.fillStyle='rgba(209,25,30,.5)';ctx.beginPath();ctx.arc(x,cy,2.4*devicePixelRatio,0,7);ctx.fill();
+    }
+  }
+  rs(); addEventListener('resize',rs);
+}
+circuit($('#circuit1'));
+
+/* ---------- toast ---------- */
+let toastT;
+function toast(msg,kind){
+  const el=document.createElement('div'); el.className='toast '+(kind||''); el.innerHTML=msg;
+  $('#toast').appendChild(el); setTimeout(()=>el.remove(),3200);
+}
+
+/* ---------- tiny audio feedback ---------- */
+let actx;
+function beep(freq=620,dur=.08,type='square',vol=.04){
+  try{ actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+    const o=actx.createOscillator(),g=actx.createGain();
+    o.type=type;o.frequency.value=freq;o.connect(g);g.connect(actx.destination);
+    g.gain.setValueAtTime(vol,actx.currentTime);g.gain.exponentialRampToValueAtTime(.0001,actx.currentTime+dur);
+    o.start();o.stop(actx.currentTime+dur);
+  }catch(e){}
+}
+
+/* ============================================================
+   LAB CONTENT (data-driven). Targets are simulated practice
+   boxes modeled on standard, legal, intentionally-vulnerable
+   training machines so skills transfer to real lab VMs.
+   ============================================================ */
+const FLAGS = {
+  m1:'CYBERHUB{ftp_s3rv1c3_r00t}',
+  m2:'CYBERHUB{sud0_m1sc0nf1g_r00t}',
+  m3:'CYBERHUB{d0m41n_4dm1n_0wn3d}',
+  r1:'CYBERHUB{r3c0n_1s_k1ng}',
+  lp1:'CYBERHUB{l1nux_pr1v_3sc}',
+  smb1:'CYBERHUB{0p3n_sh4r3s_l34k}',
+  web1:'CYBERHUB{w34k_l0g1n_byp4ss}',
+};
+// A machine: services for scan, the one weak service, an educational
+// exploit narration (technique class + defender note, NOT a payload),
+// a tiny post-access filesystem, and a flag to capture.
+function mach(o){return Object.assign({discovered:false,scanned:false,exploited:false,owned:false},o);}
+
+const LIVEFIRE = {
+  net:'10.10.14.0/24', kali:'10.10.14.66', is3d:true,
+  decoys:['10.10.14.12','10.10.14.40','10.10.14.41','10.10.14.88','10.10.14.120'],
+  machines:[
+    mach({id:'m1',name:'WKSTN-07',ip:'10.10.14.21',os:'Linux (Debian 10)',desk:'priya',
+      role:'Finance workstation — user "Priya". Your first real foothold on the floor.',
+      services:[['21','ftp','vsftpd 2.3.4'],['22','ssh','OpenSSH 7.9p1'],['80','http','Apache 2.4.38'],['139','netbios-ssn','Samba 4.9']],
+      weakIdx:0,
+      weakness:{title:'Outdated FTP service with a publicly-known flaw',
+        teach:'The FTP daemon is running an old version with a documented vulnerability. Attackers match a service banner to a known advisory, then use a ready-made module.',
+        defense:'Keep services patched and remove anonymous/legacy FTP. A version banner is reconnaissance gold — minimise what you expose.'},
+      exploit:['[*] Matching service banner → known advisory for this version.',
+        '[*] Launching framework module against 10.10.14.21:21 ...',
+        '[+] Service responded — command session opened as a privileged account.'],
+      idline:'uid=0(root) gid=0(root) groups=0(root)', prompt:'root@wkstn-07:~#',
+      files:{'flag.txt':FLAGS.m1,
+        'notes.txt':'Priya: VPN + file server at 10.10.14.30. Creds saved in loot.txt (bad idea, I know).',
+        'loot.txt':'domain creds found in memory → nexora\\\\sam : Summ3r2026!  (reuse on the DC later)'},
+      sudo:'(nothing useful here — you are already root)',
+      next:'Read loot.txt — it drops the next identity. Then scan the file server at 10.10.14.30.'}),
+    mach({id:'m2',name:'FILESRV-01',ip:'10.10.14.30',os:'Linux (Ubuntu 20.04)',desk:'sam',
+      role:'Internal file server. Sam from IT Support manages it — weak admin hygiene.',
+      services:[['22','ssh','OpenSSH 8.2'],['80','http','nginx 1.18'],['445','smb','Samba 4.11'],['3306','mysql','MySQL 8.0']],
+      weakIdx:2,
+      weakness:{title:'Over-shared SMB + a sudo misconfiguration for privilege escalation',
+        teach:'An anonymous SMB share leaks a low-priv login. Once on the box, "sudo -l" reveals a binary the user may run as root — a classic local privilege-escalation path (GTFOBins-style).',
+        defense:'Lock down share permissions, never allow guest access to sensitive shares, and audit every NOPASSWD sudo rule. Least privilege stops the escalation.'},
+      exploit:['[*] Anonymous SMB read → recovered a service login.',
+        '[*] Authenticating over SSH with the recovered credentials ...',
+        '[+] Shell as low-privileged user "svc". Now enumerate for privilege escalation.'],
+      idline:'uid=1001(svc) gid=1001(svc) groups=1001(svc)', prompt:'svc@filesrv-01:~$',
+      files:{'flag.txt':FLAGS.m2,
+        'readme.txt':'Run "sudo -l" to see what this account may execute as root.',
+        'creds.txt':'nexora\\\\sam : Summ3r2026!   → works on the Domain Controller (10.10.14.5)'},
+      sudo:'User svc may run the following as root:  (root) NOPASSWD: /usr/bin/find\\n   → a root-runnable binary like this can be abused to spawn a root shell. Defender fix: remove this rule.',
+      next:'After reading sudo -l, you understand the privesc path. Capture the flag, then pivot to the DC at 10.10.14.5.'}),
+    mach({id:'m3',name:'DC-NEXORA',ip:'10.10.14.5',os:'Windows Server 2022 (Domain Controller)',desk:null,
+      role:'Nexora domain controller. Own this and you own the whole Active Directory domain.',
+      services:[['88','kerberos','Microsoft Windows Kerberos'],['139','netbios-ssn',''],['389','ldap','AD LDAP'],['445','smb',''],['3389','rdp','Microsoft Terminal Services']],
+      weakIdx:2,
+      weakness:{title:'Credential reuse into Active Directory → Domain Admin',
+        teach:'Reused domain credentials from the file server authenticate to the DC. Enumerate the domain over SMB/LDAP, confirm privileges, and you control every account and policy.',
+        defense:'Separate admin tiers, ban password reuse, enforce MFA, monitor for anomalous DC logons. One reused password should never reach a Domain Controller.'},
+      exploit:['[*] Validating recovered domain credentials against 10.10.14.5 ...',
+        '[+] Credentials valid — administrative access to the domain confirmed.',
+        '[+] Domain enumeration complete: full control of NEXORA.LOCAL.'],
+      idline:'NEXORA\\\\Administrator  (Domain Admins)', prompt:'PS C:\\\\Windows\\\\system32>',
+      files:{'root.txt':FLAGS.m3,'domain.txt':'NEXORA.LOCAL — 142 users, 11 groups, 3 GPOs. You now hold the keys to all of it.'},
+      sudo:'(Windows) You already hold Domain Admin — the highest privilege in the domain.',
+      next:'Capture the final flag, then head to the red SERVER ROOM door to extract and finish the range.'}),
+  ],
+};
+// standalone terminal labs (no 3D) — each a focused scenario
+function scen(net,kali,ms,decoys){return {net,kali,is3d:false,machines:ms,decoys:decoys||[]};}
+const LABS = [
+  {id:'livefire',flag:true,type:'3d',title:'EH 3D Attack — Live Fire',track:'Ethical Hacking',diff:'int',
+    icon:'crosshair', scenario:LIVEFIRE,
+    desc:'Walk into Nexora Corp as an insider. Plug in, pivot desk-to-desk, and climb from intern to Domain Admin against three live-fire hosts.',
+    learn:['Physical foothold → network pivot','Full kill-chain on 3 chained hosts','Identity escalation to Domain Admin']},
+
+  {id:'recon',type:'terminal',title:'Network Recon & Scanning',track:'Cyber Security',diff:'beg',icon:'radar',
+    scenario:scen('10.10.20.0/24','10.10.20.50',[
+      mach({id:'r1',name:'TARGET-APP',ip:'10.10.20.11',os:'Linux',
+        role:'Your first host. Learn to map a network and read a service scan like an analyst.',
+        services:[['22','ssh','OpenSSH 8.9'],['80','http','Apache 2.4.52'],['8080','http-alt','Jetty 9.4']],
+        weakIdx:1, weakness:{title:'Exposed admin panel on a secondary web port',
+          teach:'Scanning reveals a second HTTP service most people miss. Enumerating all ports — not just 80/443 — is the whole lesson of recon.',
+          defense:'Inventory every listening port. Shadow services on high ports are a top cause of breaches.'},
+        exploit:['[*] Browsing the exposed panel on :8080 ...','[+] Default landing page grants an operator console. Session opened.'],
+        idline:'uid=33(www-data)', prompt:'www-data@target-app:/$',
+        files:{'flag.txt':FLAGS.r1,'readme.txt':'Recon done right finds what others miss. Capture the flag.'},
+        sudo:'(not needed for this lab)', next:'Capture the flag — you have completed the recon lab.'})
+    ],['10.10.20.9','10.10.20.33']),
+    desc:'The attacker’s first move. Discover live hosts, scan services, and learn to read an nmap report the way a pro does.',
+    learn:['Host discovery vs port scanning','Service/version fingerprinting','Spotting shadow services on odd ports']},
+
+  {id:'linuxpriv',type:'terminal',title:'Linux Privilege Escalation',track:'Ethical Hacking',diff:'int',icon:'arrow-up',
+    scenario:scen('10.10.30.0/24','10.10.30.50',[
+      mach({id:'lp1',name:'DEV-BOX',ip:'10.10.30.21',os:'Linux (Ubuntu)',
+        role:'You already have a low-priv shell. Goal: become root the legitimate attacker way — by finding a misconfiguration.',
+        services:[['22','ssh','OpenSSH 8.2'],['80','http','nginx']],
+        weakIdx:0, weakness:{title:'Local privilege escalation via a sudo misconfiguration',
+          teach:'"sudo -l" is the single highest-value command after landing a shell. A binary runnable as root without a password can often be turned into a root shell.',
+          defense:'Audit sudoers constantly. Remove NOPASSWD on anything that can read files, write files, or spawn a shell.'},
+        exploit:['[*] You start with a foothold shell as "svc".','[+] Shell ready — run "sudo -l" to find your escalation path.'],
+        idline:'uid=1001(svc) gid=1001(svc)', prompt:'svc@dev-box:~$',
+        files:{'flag.txt':FLAGS.lp1,'escalate.txt':'Hint: run "sudo -l", then capture the flag once you understand the path.'},
+        sudo:'User svc may run:  (root) NOPASSWD: /usr/bin/vim\\n   → an editor runnable as root can escape to a root shell. Defender fix: never allow this.',
+        next:'You mapped the privesc path. Capture the flag to finish.'})
+    ]),
+    desc:'You have a foothold — now earn root. Enumerate the box, read sudo rules, and understand how one misconfig hands over the whole machine.',
+    learn:['Post-exploitation enumeration','Reading "sudo -l" like an attacker','Why least-privilege defeats escalation']},
+
+  {id:'smb',type:'terminal',title:'SMB & Share Enumeration',track:'Ethical Hacking',diff:'beg',icon:'folder',
+    scenario:scen('10.10.40.0/24','10.10.40.50',[
+      mach({id:'smb1',name:'FILE-DEPOT',ip:'10.10.40.18',os:'Linux (Samba)',
+        role:'A file server with careless share permissions — the classic internal-network weak point.',
+        services:[['139','netbios-ssn','Samba'],['445','smb','Samba 4.13']],
+        weakIdx:1, weakness:{title:'Anonymous/guest-readable SMB shares leaking credentials',
+          teach:'Guest-readable shares frequently hold passwords, backups, and config files. Enumerating shares is step one on almost every internal engagement.',
+          defense:'Disable guest access, scope shares to groups, and never store secrets on a file share.'},
+        exploit:['[*] Listing shares anonymously on 10.10.40.18 ...','[+] Readable share "backups" found — recovered a credentials file. Access granted.'],
+        idline:'uid=1003(backupsvc)', prompt:'backupsvc@file-depot:~$',
+        files:{'flag.txt':FLAGS.smb1,'found.txt':'Secrets in open shares = instant compromise. Capture the flag.'},
+        sudo:'(not needed for this lab)', next:'Capture the flag to finish the SMB lab.'})
+    ]),
+    desc:'Internal networks leak through open file shares. Enumerate SMB, find the share you shouldn’t be able to read, and see why it matters.',
+    learn:['SMB share enumeration','Finding secrets in open shares','Hardening share permissions']},
+
+  {id:'webapp',type:'terminal',title:'Web App Security Basics',track:'Cyber Security',diff:'int',icon:'globe',
+    scenario:scen('10.10.50.0/24','10.10.50.50',[
+      mach({id:'web1',name:'WEB-PORTAL',ip:'10.10.50.14',os:'Linux (web app)',
+        role:'A vulnerable login portal — learn how weak authentication falls, and how to build it right.',
+        services:[['80','http','Apache'],['443','https','Apache/OpenSSL']],
+        weakIdx:0, weakness:{title:'Authentication bypass via unsanitised login input',
+          teach:'When a login form trusts user input in its query, an attacker can slip past authentication. This is the #1 web risk class in every security curriculum.',
+          defense:'Use parameterised queries, a vetted auth library, rate-limiting, and MFA. Never build login logic by hand.'},
+        exploit:['[*] Testing the login form for input-handling flaws ...','[+] Authentication logic bypassed — admin dashboard reached.'],
+        idline:'web-admin (application session)', prompt:'web-portal$',
+        files:{'flag.txt':FLAGS.web1,'advice.txt':'Parameterise queries + use a real auth library. Capture the flag.'},
+        sudo:'(web context — focus on the app-layer fix)', next:'Capture the flag to finish the web lab.'})
+    ]),
+    desc:'See how a weak login page gets bypassed — and exactly which secure-coding fixes shut it down for good.',
+    learn:['How auth bypass happens','Input validation & parameterised queries','Defensive secure-coding habits']},
+
+  // Blue-team quiz labs
+  {id:'soc',type:'quiz',title:'SOC Analyst — Log Triage',track:'SOC & VAPT',diff:'beg',icon:'activity',
+    desc:'Sit in the blue-team seat. Read real-style log lines and decide what’s noise, what’s suspicious, and what’s an incident.',
+    learn:['Reading auth & web logs','Separating noise from signal','When to raise an incident'],
+    quiz:[
+      {q:'A server shows 5,000 failed SSH logins from one IP in 2 minutes, then one success. What is this?',
+        ctx:'Failed password for root from 203.0.113.9 (x5000)\\nAccepted password for root from 203.0.113.9',
+        opts:['Normal admin activity','A brute-force attack that succeeded','A scheduled backup','A DNS misconfiguration'],a:1,
+        fb:'Correct — a flood of failures then a success is a classic successful brute-force. Isolate the host and rotate credentials.'},
+      {q:'Which log line most likely indicates a web attack attempt?',
+        ctx:'A) GET /index.html 200\\nB) GET /products?id=5 200\\nC) GET /login?u=admin\\\'--  200\\nD) GET /logo.png 304',
+        opts:['A','B','C','D'],a:2,
+        fb:'Correct — line C contains SQL-injection syntax in the query string. Flag it and check whether it succeeded.'},
+      {q:'A user’s account logs in from two countries 3 minutes apart. Best first action?',
+        ctx:'login ok user=jdoe geo=IN 09:02\\nlogin ok user=jdoe geo=BR 09:05',
+        opts:['Ignore — users travel','Impossible-travel alert: force re-auth / lock & investigate','Delete the account','Email the whole company'],a:1,
+        fb:'Correct — "impossible travel" is a strong account-compromise signal. Force re-authentication and investigate.'},
+    ]},
+
+  {id:'vapt',type:'quiz',title:'VAPT — Severity & Reporting',track:'SOC & VAPT',diff:'int',icon:'clipboard',
+    desc:'Turn findings into a report clients act on. Practice rating severity and writing the remediation that actually fixes the risk.',
+    learn:['CVSS-style severity thinking','Prioritising findings','Writing clear remediation'],
+    quiz:[
+      {q:'Unauthenticated remote code execution on an internet-facing server. Severity?',
+        opts:['Low','Medium','High','Critical'],a:3,
+        fb:'Correct — unauth RCE, externally reachable = Critical. It goes to the top of the remediation list.'},
+      {q:'Best remediation wording for "passwords stored without hashing"?',
+        opts:['"Fix the passwords"','"Store credentials using a slow, salted password hash (e.g. bcrypt/Argon2) and migrate existing ones"','"Tell users to pick better passwords"','"Add a firewall"'],a:1,
+        fb:'Correct — remediation must be specific and actionable: name the control and the migration path.'},
+      {q:'Two findings: (1) missing security header, (2) SQL injection in login. Report order?',
+        opts:['Header first','SQL injection first — higher impact','Alphabetical','Whichever was found first'],a:1,
+        fb:'Correct — order by risk, not discovery time. SQL injection in auth outranks a missing header.'},
+    ]},
+
+  {id:'wifi',type:'briefing',title:'Wi-Fi Security Fundamentals',track:'Cyber Security',diff:'beg',icon:'wifi',
+    desc:'Understand how wireless networks are attacked and defended: encryption standards, rogue APs, and safe testing practice.',
+    learn:['WEP/WPA2/WPA3 differences','Rogue AP & evil-twin concepts','Defensive wireless hardening']},
+  {id:'ir',type:'briefing',title:'Incident Response Drill',track:'SOC & VAPT',diff:'adv',icon:'shield',
+    desc:'Walk the IR lifecycle — prepare, detect, contain, eradicate, recover — against a simulated breach timeline.',
+    learn:['The 6-step IR lifecycle','Containment vs eradication','Post-incident lessons learned']},
+];
+
+/* ---------- lab icons ---------- */
+const ICON = {
+  crosshair:'<circle cx="12" cy="12" r="8"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
+  radar:'<path d="M12 12 19 5"/><circle cx="12" cy="12" r="9"/><path d="M12 12a6 6 0 1 0 6 6"/>',
+  'arrow-up':'<path d="M12 19V5M6 11l6-6 6 6"/>',
+  folder:'<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>',
+  globe:'<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3 3 15 0 18M12 3c-3 3-3 15 0 18"/>',
+  activity:'<path d="M3 12h4l3 8 4-16 3 8h4"/>',
+  clipboard:'<rect x="6" y="4" width="12" height="17" rx="2"/><path d="M9 4V3h6v1M9 10h6M9 14h6"/>',
+  wifi:'<path d="M2 8.5a16 16 0 0 1 20 0M5 12a11 11 0 0 1 14 0M8.5 15.5a6 6 0 0 1 7 0"/><circle cx="12" cy="19" r="1"/>',
+  shield:'<path d="M12 3l7 3v5c0 5-3 8-7 10-4-2-7-5-7-10V6z"/>',
+};
+const svgIco = n=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[n]||ICON.shield}</svg>`;
+
+/* ============================================================
+   APP STATE + progress persistence (per-viewer convenience)
+   ============================================================ */
+const store = {
+  get(){ try{return JSON.parse(localStorage.getItem('cyberhub_progress')||'{}');}catch(e){return {};} },
+  set(v){ try{localStorage.setItem('cyberhub_progress',JSON.stringify(v));}catch(e){} }
+};
+let progress = store.get();      // { labId: percent 0..100 }
+let student = 'demo.student';
+
+function setLabProgress(id,pc){ progress[id]=Math.max(progress[id]||0,Math.round(pc)); store.set(progress); refreshDash(); }
+function overall(){
+  const ids=LABS.map(l=>l.id); const done=ids.reduce((s,id)=>s+(progress[id]||0),0);
+  return Math.round(done/ids.length);
+}
+
+/* ---------- screens ---------- */
+function show(id){ $$('.screen').forEach(s=>s.hidden=(s.id!==id)); }
+
+/* ============================================================
+   LOGIN
+   ============================================================ */
+$('#loginForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const u=$('#u').value.trim()||'student';
+  student=u; beep(680,.06);
+  $('#whoami').textContent=u+' · Nexora batch 2026';
+  $('#avatar').textContent=(u[0]||'S').toUpperCase();
+  buildDash(); show('dash');
+});
+$('#logout').addEventListener('click',()=>{ show('login'); });
+
+/* ============================================================
+   DASHBOARD
+   ============================================================ */
+function labCard(l){
+  const pc=progress[l.id]||0;
+  const diffTag={beg:'beg',int:'int',adv:'adv'}[l.diff];
+  const diffName={beg:'Beginner',int:'Intermediate',adv:'Advanced'}[l.diff];
+  const typeName={'3d':'3D Range','terminal':'Terminal Lab','quiz':'Blue-Team Quiz','briefing':'Briefing'}[l.type];
+  const btn = l.type==='briefing'
+     ? `<button class="btn btn-ghost go" disabled>Briefing</button>`
+     : `<button class="btn btn-primary go" data-open="${l.id}">${pc>=100?'Replay':(pc>0?'Resume':'Start')} →</button>`;
+  return `<div class="lab ${l.flag?'flag':''}" data-track="${l.track}">
+    ${l.flag?'<div class="ribbon">Flagship</div>':''}
+    <div class="lab-top">
+      <div class="ico">${svgIco(l.icon)}</div>
+    </div>
+    <div>
+      <div class="track">${l.track}</div>
+      <h3>${l.title}</h3>
+    </div>
+    <p>${l.desc}</p>
+    <div class="meta"><span class="tag ${diffTag}">${diffName}</span><span class="tag">${typeName}</span></div>
+    <div class="barmini"><i style="width:${pc}%"></i></div>
+    <div class="foot"><span class="pc tnum">${pc}% complete</span>${btn}</div>
+  </div>`;
+}
+let activeFilter='All';
+function buildDash(){
+  $('#flagGrid').innerHTML=LABS.filter(l=>l.flag).map(labCard).join('');
+  const tracks=['All',...new Set(LABS.filter(l=>!l.flag).map(l=>l.track))];
+  $('#filters').innerHTML=tracks.map(t=>`<button class="chip" data-f="${t}" aria-pressed="${t===activeFilter}">${t}</button>`).join('');
+  renderLabs(); refreshDash();
+}
+function renderLabs(){
+  const list=LABS.filter(l=>!l.flag && (activeFilter==='All'||l.track===activeFilter));
+  $('#labGrid').innerHTML=list.map(labCard).join('');
+  $('#labCount').textContent=list.length+' labs';
+}
+function refreshDash(){
+  const o=overall(); const ob=$('#overallBar'); if(ob){ob.style.width=o+'%';$('#overallPc').textContent=o+'%';}
+  $$('#dash .lab').forEach(c=>{}); // cards rebuilt on nav; cheap enough
+}
+$('#dash').addEventListener('click',e=>{
+  const f=e.target.closest('[data-f]'); if(f){activeFilter=f.dataset.f;
+    $$('#filters .chip').forEach(c=>c.setAttribute('aria-pressed',c.dataset.f===activeFilter));renderLabs();return;}
+  const o=e.target.closest('[data-open]'); if(o){ openLab(o.dataset.open); }
+});
+
+function openLab(id){
+  const lab=LABS.find(l=>l.id===id); if(!lab) return;
+  beep(640,.06);
+  if(lab.type==='quiz'){ openQuiz(lab); return; }
+  if(lab.type==='3d'){ startRange(lab); return; }
+  if(lab.type==='terminal'){ startTerminalLab(lab); return; }
+}
+
+/* ============================================================
+   OPS CONSOLE — shared terminal engine
+   ============================================================ */
+const consoleEl=$('#console'), termOut=$('#termOut'), termIn=$('#termIn'), termPrompt=$('#termPrompt');
+let LAB=null;          // active lab
+let SC=null;           // active scenario (machines etc.)
+let ctx={mode:'kali',machine:null};   // kali | shell
+let cmdHist=[],histIx=-1;
+
+function pr(html,cls){ const d=document.createElement('div'); d.className='ln'+(cls?(' '+cls):''); d.innerHTML=html; termOut.appendChild(d); termOut.scrollTop=termOut.scrollHeight; }
+function prRaw(t,cls){ pr(esc(t),cls); }
+function banner(){
+  pr('<span class="hd">CyberHub Arena</span> · simulated training console','acc');
+  pr('Targets are safe practice hosts. Commands use real syntax so your skills transfer to live lab VMs.','dim');
+  pr('Type <span class="acc">help</span> for commands, <span class="acc">hint</span> for your next step.','dim');
+  pr('','');
+}
+
+/* ---- milestones / progress per scenario ---- */
+function milestones(){
+  const m={}; let w={};
+  if(SC.is3d){ m.foothold=false; w.foothold=8; m.extract=false; w.extract=14; }
+  m.discovered=false; w.discovered=SC.is3d?8:14;
+  SC.machines.forEach((mc,i)=>{ const last=i===SC.machines.length-1;
+    m['s_'+mc.id]=false; w['s_'+mc.id]=SC.is3d?6:14;
+    m['o_'+mc.id]=false; w['o_'+mc.id]=last?(SC.is3d?14:30):(SC.is3d?12:20);
+  });
+  return {m,w};
+}
+let MS={m:{},w:{}};
+function setMs(k){ if(k in MS.m && !MS.m[k]){ MS.m[k]=true; updateProgress(); } }
+function scenPct(){
+  const tot=Object.values(MS.w).reduce((a,b)=>a+b,0)||1;
+  const got=Object.keys(MS.m).reduce((a,k)=>a+(MS.m[k]?MS.w[k]:0),0);
+  return Math.round(got/tot*100);
+}
+function updateProgress(){
+  const pc=scenPct();
+  $('#cPc').textContent=pc+'%';
+  if(SC.is3d){ $('#rPc').textContent=pc+'%'; $('#rBar').style.width=pc+'%'; }
+  if(LAB) setLabProgress(LAB.id,pc);
+}
+
+/* ---- render target panel ---- */
+function renderTargets(){
+  const host=$('#targets');
+  const discovered=SC.machines.filter(m=>m.discovered);
+  if(!discovered.length){ host.innerHTML='<div class="empty">No hosts yet.<br>Run <b style="color:#ff8a8a">nmap -sn '+SC.net+'</b> to discover machines.</div>'; return; }
+  host.innerHTML=discovered.map(m=>{
+    let st='<span class="st">discovered</span>';
+    if(m.owned) st='<span class="st pwn">★ owned</span>';
+    else if(m.scanned) st='<span class="st scan">scanned</span>';
+    const svc=m.scanned?('<div class="svc">'+m.services.map(s=>s[0]+'/tcp '+s[1]+(s[2]?' · '+s[2]:'')).join('\n')+'</div>'):'';
+    const cap=m.owned
+      ? `<div class="capdone">✓ ${esc(m.flag)}</div>`
+      : `<div class="cap"><input placeholder="paste ${m.id.toUpperCase()} flag…" data-cap="${m.id}"><button data-capbtn="${m.id}" ${m.exploited?'':'disabled'}>Capture</button></div>`;
+    return `<div class="tcard ${m.owned?'owned':''}">
+      <div class="tt"><span class="nm">${m.name} <span class="ip">${m.ip}</span></span>${st}</div>
+      <div class="desc">${m.role}</div>${svc}${cap}</div>`;
+  }).join('');
+}
+
+/* ---- capture handling ---- */
+$('#targets').addEventListener('click',e=>{
+  const b=e.target.closest('[data-capbtn]'); if(!b) return;
+  const id=b.dataset.capbtn, m=SC.machines.find(x=>x.id===id);
+  if(!m) return;
+  const inp=$(`[data-cap="${id}"]`); const val=(inp.value||'').trim();
+  const target=(m.flag||'').trim();
+  if(val && target && val.toLowerCase()===target.toLowerCase()){ captureFlag(m); }
+  else { beep(200,.12,'sawtooth',.05); toast('✗ <b>Wrong flag</b> — check the flag file again','bad');
+         inp.style.borderColor='#6b2e2e'; }
+});
+function captureFlag(m){
+  if(m.owned) return; m.owned=true; beep(880,.1);beep(1180,.1);
+  setMs('o_'+m.id);
+  pr('',''); pr('[+] Flag accepted for '+m.name+' → <span class="flag">'+esc(m.flag)+'</span>','ok');
+  pr('    '+captions(m),'dim');
+  renderTargets();
+  const ownedCount=SC.machines.filter(x=>x.owned).length;
+  toast('★ <b>'+m.name+' owned</b> — '+ownedCount+'/'+SC.machines.length+' hosts','good');
+  // identity climb (3d)
+  if(SC.is3d){ climbIdentity(ownedCount); markDeskOwned(m.desk); }
+  // final?
+  if(SC.machines.every(x=>x.owned)){
+    if(SC.is3d){ setObjective('All hosts owned. Head to the red <b>SERVER ROOM</b> door to extract.'); unlockServerRoom(); }
+    else { finishTerminalLab(); }
+  } else {
+    if(SC.is3d) setObjective(m.next);
+  }
+}
+function captions(m){ return m.next||'Captured.'; }
+
+/* ---- command interpreter ---- */
+function handle(raw){
+  const cmd=raw.trim();
+  pr('<span class="pr">'+esc(termPrompt.textContent)+'</span> <span class="cmd">'+esc(cmd)+'</span>');
+  if(!cmd) return;
+  cmdHist.push(cmd); histIx=cmdHist.length;
+  if(ctx.mode==='shell') return shellCmd(cmd);
+  const lc=cmd.toLowerCase();
+  const first=lc.split(/\s+/)[0];
+  if(lc==='help'){ return help(); }
+  if(lc==='clear'||lc==='cls'){ termOut.innerHTML=''; return; }
+  if(lc==='hint'){ return hint(); }
+  if(lc==='status'||lc==='objectives'){ return status(); }
+  if(lc==='whoami'){ return pr(curIdentity(),'ok'); }
+  if(first==='ifconfig'||lc==='ip a'||lc==='ip addr'){ return ifconfig(); }
+  if(first==='nmap'){ return nmap(lc); }
+  if(first==='searchsploit'){ return searchsploit(cmd); }
+  if(first==='smbclient'||first==='enum4linux'||first==='crackmapexec'||first==='cme'){ return enumHelper(lc); }
+  if(first==='exploit'||first==='run'||first==='access'||first==='ssh'){ return doExploit(cmd); }
+  if(['ls','cat','pwd','id','sudo'].includes(first)){ return pr('No active session. Exploit a host first — try <span class="acc">hint</span>.','warn'); }
+  pr('command not found: '+esc(first)+' — type <span class="acc">help</span>','warn');
+}
+function curIdentity(){
+  if(!SC.is3d) return 'attacker@kali (operator)';
+  const owned=SC.machines.filter(m=>m.owned).length;
+  return ['intern (low-priv foothold)','priya@WKSTN-07','sam@FILESRV-01','NEXORA\\\\Administrator (Domain Admin)'][owned]||'operator';
+}
+function help(){
+  pr('<span class="hd">Recon & scanning</span>','');
+  pr('  nmap -sn '+SC.net+'      discover live hosts on the subnet','dim');
+  pr('  nmap -sV <ip>              scan a host’s services & versions','dim');
+  pr('  searchsploit <service>     check a service for known weaknesses','dim');
+  pr('<span class="hd">Access</span>','');
+  pr('  exploit <ip>               run the guided exploit against a scanned host','dim');
+  pr('  (then) ls, cat <file>, id, sudo -l, exit','dim');
+  pr('<span class="hd">Help & progress</span>','');
+  pr('  hint · status · whoami · clear','dim');
+}
+function ifconfig(){
+  pr('tun0: flags=4305<UP,POINTOPOINT,RUNNING,NOARP,MULTICAST>','');
+  pr('      inet '+SC.kali+'  netmask 255.255.255.0','');
+  pr('This is your Kali attacker IP on the range.','dim');
+}
+function nmap(lc){
+  if(lc.includes('-sn')||lc.includes('-sp')){
+    pr('Starting Nmap host discovery on '+SC.net+' ...','dim');
+    const ups=[...SC.machines.map(m=>m.ip),...SC.decoys].sort(()=>Math.random()-.5);
+    ups.forEach(ip=>pr('Nmap scan report for '+ip+'  — host is up','' ));
+    pr('Nmap done: '+ (SC.machines.length+SC.decoys.length) +' hosts up.','ok');
+    SC.machines.forEach(m=>m.discovered=true); setMs('discovered');
+    renderTargets();
+    pr('→ '+SC.machines.length+' target(s) added to scope (right). Now scan one: <span class="acc">nmap -sV '+SC.machines[0].ip+'</span>','teach');
+    return;
+  }
+  const ipm=lc.match(/(\d{1,3}\.){3}\d{1,3}/);
+  if(!ipm){ pr('Usage: nmap -sn '+SC.net+'   or   nmap -sV <ip>','warn'); return; }
+  const ip=ipm[0]; const m=SC.machines.find(x=>x.ip===ip);
+  if(!m){ pr('Nmap scan report for '+ip,''); pr('All scanned ports closed / host not interesting.','dim');
+          pr('(decoy host — focus on your in-scope targets)','dim'); return; }
+  if(!m.discovered){ m.discovered=true; setMs('discovered'); }
+  pr('Starting Nmap service scan on '+ip+' ('+m.name+') ...','dim');
+  pr('PORT     STATE  SERVICE     VERSION','hd');
+  m.services.forEach((s,i)=>{
+    const line=(s[0]+'/tcp').padEnd(9)+'open  '+s[1].padEnd(12)+(s[2]||'');
+    pr(esc(line), i===m.weakIdx?'warn':'');
+  });
+  pr('OS: '+m.os,'dim');
+  m.scanned=true; setMs('s_'+m.id); renderTargets();
+  const ws=m.services[m.weakIdx];
+  pr('→ '+ws[1]+' ('+ (ws[2]||ws[1]) +') stands out. <span class="acc">'+m.weakness.title+'</span>','teach');
+  pr('  Try: <span class="acc">searchsploit '+ws[1]+'</span>  then  <span class="acc">exploit '+ip+'</span>','teach');
+}
+function searchsploit(cmd){
+  const t=cmd.split(/\s+/).slice(1).join(' ')||'';
+  pr('Searching exploit database for: '+esc(t)+' ...','dim');
+  const m=SC.machines.find(x=>x.scanned && (x.services[x.weakIdx][1].includes(t.toLowerCase())|| (x.services[x.weakIdx][2]||'').toLowerCase().includes(t.toLowerCase())));
+  if(m){ pr('--------------------------------------------------------------','dim');
+    pr(' Known weakness class: '+m.weakness.title,'acc');
+    pr(' Why it matters: '+m.weakness.teach,'teach');
+    pr('--------------------------------------------------------------','dim');
+    pr('→ Proceed: <span class="acc">exploit '+m.ip+'</span>','teach');
+  } else { pr('No direct match. Scan a host first (nmap -sV <ip>), then search its weak service.','warn'); }
+}
+function enumHelper(lc){
+  const ipm=lc.match(/(\d{1,3}\.){3}\d{1,3}/);
+  const m=ipm&&SC.machines.find(x=>x.ip===ipm[0]);
+  if(m&&m.scanned){ pr('[*] Enumerating '+m.name+' ...','dim');
+    pr('[+] '+m.weakness.teach,'teach');
+    pr('→ Ready: <span class="acc">exploit '+m.ip+'</span>','teach'); }
+  else pr('Scan the host first: nmap -sV <ip>','warn');
+}
+function doExploit(cmd){
+  const ipm=cmd.match(/(\d{1,3}\.){3}\d{1,3}/);
+  let m = ipm && SC.machines.find(x=>x.ip===ipm[0]);
+  if(!m){ // allow name
+    const low=cmd.toLowerCase();
+    m=SC.machines.find(x=>low.includes(x.name.toLowerCase()));
+  }
+  if(!m){ pr('Specify a scanned target: exploit <ip>','warn'); return; }
+  if(!m.scanned){ pr('Enumerate first: <span class="acc">nmap -sV '+m.ip+'</span>','warn'); return; }
+  if(m.owned){ pr(m.name+' is already owned.','dim'); return; }
+  m.exploit.forEach((l,i)=>setTimeout(()=>{ pr(l, l.startsWith('[+]')?'ok':'dim');
+    if(i===m.exploit.length-1){ enterShell(m); } }, 260*(i+1)));
+}
+function enterShell(m){
+  m.exploited=true; renderTargets();
+  ctx={mode:'shell',machine:m}; termPrompt.textContent=m.prompt;
+  pr('',''); pr('[+] Session opened on '+m.name+' — id: '+m.idline,'ok');
+  pr('    <span class="def">Defender’s note:</span> '+m.weakness.defense,'def');
+  pr('→ Loot the host: <span class="acc">ls</span>, then <span class="acc">cat flag.txt</span>'+(Object.keys(m.files).some(f=>/sudo|escal|readme/.test(f))?', and <span class="acc">sudo -l</span>':''),'teach');
+}
+function shellCmd(cmd){
+  const m=ctx.machine, lc=cmd.toLowerCase(), first=lc.split(/\s+/)[0];
+  if(first==='exit'){ ctx={mode:'kali',machine:null}; termPrompt.textContent=SC.kali?'ER-Kali:~$':'$'; pr('logout — back on your Kali box.','dim'); return; }
+  if(lc==='help'){ pr('session commands: ls · cat <file> · id · whoami · pwd · sudo -l · exit','dim'); return; }
+  if(first==='id'||first==='whoami'){ pr(m.idline,'ok'); return; }
+  if(first==='pwd'){ pr(m.prompt.includes('PS ')?'C:\\\\Windows\\\\system32':'/root','' ); return; }
+  if(first==='ls'){ pr(Object.keys(m.files).join('   '),''); return; }
+  if(first==='sudo'&&lc.includes('-l')){ pr('Matching Defaults entries:','dim'); pr(m.sudo.replace(/\\n/g,'\n'),'warn');
+    pr('<span class="def">Defender’s note:</span> '+m.weakness.defense,'def'); return; }
+  if(first==='cat'){
+    const f=cmd.split(/\s+/)[1]||''; const key=Object.keys(m.files).find(k=>k===f||k===f.replace(/^\.\//,''));
+    if(key){ const v=m.files[key]; const isFlag=/flag|root\.txt/.test(key);
+      pr(esc(v.replace(/\\n/g,'\n')), isFlag?'flag':'');
+      if(isFlag) pr('→ Copy this flag into the '+m.name+' capture box on the right.','teach');
+      return; }
+    pr('cat: '+esc(f)+': No such file','warn'); return;
+  }
+  pr('command not found in session: '+esc(first)+' — try: ls, cat <file>, sudo -l, exit','warn');
+}
+function hint(){
+  // context-aware next step
+  if(ctx.mode==='shell'){ pr('You’re in a session on '+ctx.machine.name+'. Run <span class="acc">cat flag.txt</span> (and <span class="acc">sudo -l</span> if escalation is needed), then capture the flag.','teach'); return; }
+  if(SC.is3d && !MS.m.foothold){ pr('Close the console and plug in your USB at the vacant desk (walk up, press E).','teach'); return; }
+  if(!MS.m.discovered){ pr('Discover the network: <span class="acc">nmap -sn '+SC.net+'</span>','teach'); return; }
+  const next=SC.machines.find(m=>!m.owned);
+  if(next){
+    if(!next.scanned) pr('Scan your next target: <span class="acc">nmap -sV '+next.ip+'</span>','teach');
+    else if(!next.exploited) pr('Break into '+next.name+': <span class="acc">exploit '+next.ip+'</span>','teach');
+    else pr('Open a session on '+next.name+' and read its flag file, then capture it.','teach');
+    return;
+  }
+  if(SC.is3d) pr('All hosts owned — head to the red SERVER ROOM door to extract.','teach');
+  else pr('Lab complete — every flag captured. 🎉','ok');
+}
+function status(){
+  pr('<span class="hd">Objective:</span> '+(SC.is3d?'Climb from foothold to Domain Admin.':'Capture every flag in scope.'),'');
+  SC.machines.forEach(m=>{
+    const s=m.owned?'<span class="ok">★ owned</span>':m.exploited?'<span class="warn">session open</span>':m.scanned?'<span class="warn">scanned</span>':m.discovered?'discovered':'<span class="dim">unknown</span>';
+    pr('  '+m.name.padEnd(13)+m.ip.padEnd(15)+' '+s,'');
+  });
+  pr('Progress: '+scenPct()+'%','acc');
+}
+
+/* ---- terminal input events ---- */
+termIn.addEventListener('keydown',e=>{
+  if(e.key==='Enter'){ const v=termIn.value; termIn.value=''; handle(v); }
+  else if(e.key==='ArrowUp'){ if(histIx>0){histIx--;termIn.value=cmdHist[histIx]||'';} e.preventDefault(); }
+  else if(e.key==='ArrowDown'){ if(histIx<cmdHist.length){histIx++;termIn.value=cmdHist[histIx]||'';} e.preventDefault(); }
+});
+$('#btnHint').addEventListener('click',()=>{ hint(); termIn.focus(); });
+$('#btnObjectives').addEventListener('click',()=>{ status(); termIn.focus(); });
+$('#btnReset').addEventListener('click',()=>{ if(LAB) resetScenario(); });
+$('#cClose').addEventListener('click',closeConsole);
+
+function openConsole(){ consoleEl.classList.add('open'); if(document.pointerLockElement) document.exitPointerLock(); setTimeout(()=>termIn.focus(),50); }
+function closeConsole(){ consoleEl.classList.remove('open'); if(SC&&SC.is3d) show('range'); }
+
+/* ---- load a scenario into the console ---- */
+function loadScenario(lab){
+  LAB=lab; SC=JSON.parse(JSON.stringify(lab.scenario)); // deep clone so replays reset
+  // ensure every machine has a top-level capture flag (derive from its flag file if absent)
+  SC.machines.forEach(m=>{ if(!m.flag){ m.flag=(m.files&&(m.files['flag.txt']||m.files['root.txt']))||''; } });
+  ctx={mode:'kali',machine:null};
+  MS=milestones(); cmdHist=[];histIx=-1;
+  termOut.innerHTML=''; termIn.value='';
+  termPrompt.textContent='ER-Kali:~$';
+  $('#scopeNet').textContent=SC.net;
+  $('#cTitle').innerHTML='<b>kali</b>@cyberhub: '+lab.id;
+  renderTargets(); updateProgress(); banner();
+}
+function resetScenario(){ loadScenario(LAB); toast('↺ Lab reset',''); }
+
+function startTerminalLab(lab){
+  loadScenario(lab); show('dash'); openConsole();
+  pr('Lab: '+lab.title+' — '+lab.desc,'acc'); pr('',''); hint();
+}
+function finishTerminalLab(){
+  setLabProgress(LAB.id,100);
+  pr('',''); pr('════════════════════════════════════════','ok');
+  pr(' ✓ LAB COMPLETE — all flags captured','ok');
+  pr('   '+LAB.title,'ok');
+  pr('════════════════════════════════════════','ok');
+  beep(880,.1);setTimeout(()=>beep(1240,.14),120);
+  toast('✓ <b>Lab complete:</b> '+LAB.title,'good');
+}
+
+/* ============================================================
+   QUIZ LABS (blue team) — own modal, isolated from the console
+   ============================================================ */
+function openQuiz(lab){
+  show('dash');
+  let answered=0, correct=0;
+  const modal=document.createElement('div');
+  modal.id='quizModal'; modal.className='open';
+  modal.style.cssText='position:absolute;inset:0;z-index:20;display:flex;background:rgba(6,5,6,.6);backdrop-filter:blur(3px)';
+  modal.innerHTML=`<div class="cwin"><div class="cbar">
+      <div class="dots"><i></i><i></i><i></i></div>
+      <div class="ttl"><b>blue-team</b>@cyberhub: ${lab.id}</div><div class="spacer"></div>
+      <div class="cpc">score <span id="qScore" class="tnum">0%</span></div>
+      <button class="xbtn" id="qX">✕</button></div>
+    <div style="flex:1;overflow:auto;background:var(--term-bg)"><div class="quizwrap gut">
+      <h2 style="color:var(--g-fg);margin-bottom:6px">${lab.title}</h2>
+      <p style="color:var(--g-muted);margin:0 0 16px">${lab.desc}</p>
+      ${lab.quiz.map((q,qi)=>`<div class="qcard" data-q="${qi}">
+        <div class="qq">${qi+1}. ${esc(q.q)}</div>
+        ${q.ctx?`<div class="qctx">${esc(q.ctx.replace(/\\n/g,'\n'))}</div>`:''}
+        <div class="qopts">${q.opts.map((o,oi)=>`<button class="qopt" data-oi="${oi}">${esc(o)}</button>`).join('')}</div>
+        <div class="qfb" hidden></div></div>`).join('')}
+      <div style="text-align:center;margin:14px 0 6px"><button class="btn btn-ghost" id="qDone" style="color:#eee;border-color:#4a3a3b">Back to labs</button></div>
+    </div></div></div>`;
+  $('#app').appendChild(modal);
+  const close=()=>{ modal.remove(); };
+  modal.querySelector('#qX').addEventListener('click',close);
+  modal.querySelector('#qDone').addEventListener('click',close);
+  modal.querySelectorAll('.qcard').forEach((card,qi)=>{
+    const q=lab.quiz[qi];
+    card.querySelectorAll('.qopt').forEach(btn=>{
+      btn.addEventListener('click',()=>{
+        if(card.dataset.done) return; card.dataset.done='1'; answered++;
+        const oi=+btn.dataset.oi;
+        if(oi===q.a){ btn.classList.add('right'); correct++; beep(880,.08); }
+        else { btn.classList.add('wrong'); card.querySelector(`[data-oi="${q.a}"]`).classList.add('right'); beep(220,.1,'sawtooth',.05); }
+        const fb=card.querySelector('.qfb'); fb.hidden=false; fb.textContent=q.fb; fb.classList.toggle('bad',oi!==q.a);
+        modal.querySelector('#qScore').textContent=Math.round(correct/lab.quiz.length*100)+'%';
+        if(answered===lab.quiz.length){
+          const pc=Math.round(correct/lab.quiz.length*100);
+          setLabProgress(lab.id, pc===100?100:Math.max(pc,60));
+          toast('Quiz done — <b>'+correct+'/'+lab.quiz.length+'</b> correct',correct===lab.quiz.length?'good':'');
+        }
+      });
+    });
+  });
+}
+
+/* ============================================================
+   3D RANGE  (Three.js first-person)
+   ============================================================ */
+let renderer,scene,camera,clock,raf=null;
+let yaw=0,pitch=0,locked=false;
+const keys={};
+const player={pos:new THREE.Vector3(0,1.7,11),vel:new THREE.Vector3()};
+let interactables=[]; let curTarget=null; let deskMeshes={};
+let serverDoor=null, serverUnlocked=false, footholdDone=false;
+let touchMove={f:0,b:0,l:0,r:0};
+const ROOMX=17.4, ROOMZ=12.2;
+
+function startRange(lab){
+  loadScenario(lab);
+  show('range'); document.body.classList.toggle('touch','ontouchstart' in window);
+  $('#rangeCanvas').style.display='';
+  $$('#range .r-ov').forEach(e=>{ if(!e.classList.contains('prompt-int')) e.hidden=false; });
+  $('#promptInt').hidden=true;
+  footholdDone=false; serverUnlocked=false; curTarget=null;
+  $('#fabConsole').disabled=true;
+  $('#idText').innerHTML='intern · <span class="lvl">low-priv</span>';
+  setObjective('Find a <b>vacant desk</b> (glowing) and press <b>E</b> to plug in your USB.');
+  if(!renderer) initThree(); else { buildScene(); }
+  player.pos.set(0,1.7,11); yaw=Math.PI; pitch=0;
+  $('#lockMsg').style.display='flex';
+  if(!clock) clock=new THREE.Clock();
+  animate();
+}
+function initThree(){
+  const canvas=$('#rangeCanvas');
+  renderer=new THREE.WebGLRenderer({canvas,antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  camera=new THREE.PerspectiveCamera(72,1,0.1,120);
+  buildScene();
+  resize(); addEventListener('resize',resize);
+  // ---- look controls: pointer-lock (preferred) + click-drag fallback ----
+  const rangeEl=$('#range'); const clampP=()=>pitch=Math.max(-1.2,Math.min(1.2,pitch));
+  document.addEventListener('pointerlockchange',()=>{ locked=document.pointerLockElement===canvas;
+    if(locked) $('#lockMsg').style.display='none'; });
+  let dragging=false,dlx=0,dly=0,moved=false;
+  const uiHit=t=>t.closest('button')||t.closest('.hud-right')||t.closest('.touchpad')||t.closest('#console');
+  rangeEl.addEventListener('mousedown',e=>{
+    if(consoleEl.classList.contains('open')||uiHit(e.target)) return;
+    dragging=true; moved=false; dlx=e.clientX; dly=e.clientY;
+    $('#lockMsg').style.display='none';           // never let the hint block the click again
+  });
+  document.addEventListener('mousemove',e=>{
+    if(locked){ yaw-=e.movementX*0.0022; pitch-=e.movementY*0.0022; clampP(); return; }
+    if(dragging){ const dx=e.clientX-dlx, dy=e.clientY-dly;
+      if(Math.abs(dx)+Math.abs(dy)>3) moved=true;
+      yaw-=dx*0.004; pitch-=dy*0.004; clampP(); dlx=e.clientX; dly=e.clientY; }
+  });
+  document.addEventListener('mouseup',()=>{
+    if(!dragging) return; dragging=false;
+    if(!moved && !locked && !consoleEl.classList.contains('open')){
+      try{ const p=canvas.requestPointerLock&&canvas.requestPointerLock(); if(p&&p.catch)p.catch(()=>{}); }catch(_){}
+    }
+  });
+  // touch look
+  const cv=canvas; let lx=0,ly=0,tracking=false;
+  cv.addEventListener('touchstart',e=>{ const t=[...e.touches].find(t=>t.clientX>innerWidth*0.4); if(t){tracking=true;lx=t.clientX;ly=t.clientY;} },{passive:true});
+  cv.addEventListener('touchmove',e=>{ if(!tracking)return; const t=[...e.touches].find(t=>t.clientX>innerWidth*0.4); if(!t)return;
+    yaw-=(t.clientX-lx)*0.004; pitch-=(t.clientY-ly)*0.004; pitch=Math.max(-1.2,Math.min(1.2,pitch)); lx=t.clientX;ly=t.clientY; },{passive:true});
+  cv.addEventListener('touchend',()=>{tracking=false;});
+}
+function mat(c){return new THREE.MeshStandardMaterial({color:c,roughness:.9,metalness:.05});}
+function buildScene(){
+  scene=new THREE.Scene();
+  scene.background=new THREE.Color(0x0b0a0b);
+  scene.fog=new THREE.Fog(0x0b0a0b,10,46);
+  // lights
+  scene.add(new THREE.AmbientLight(0x4a4448,0.9));
+  const hemi=new THREE.HemisphereLight(0x8899aa,0x221416,0.5); scene.add(hemi);
+  [[-10,-6,0xd1191e],[10,4,0x5566ff],[0,0,0xffffff]].forEach(([x,z,c])=>{
+    const p=new THREE.PointLight(c,c===0xffffff?0.5:0.7,34); p.position.set(x,4.2,z); scene.add(p);
+  });
+  // floor
+  const floor=new THREE.Mesh(new THREE.PlaneGeometry(ROOMX*2+2,ROOMZ*2+2),
+    new THREE.MeshStandardMaterial({color:0x14181d,roughness:.7,metalness:.1}));
+  floor.rotation.x=-Math.PI/2; scene.add(floor);
+  // grid accent
+  const grid=new THREE.GridHelper(ROOMX*2,28,0x3a2224,0x1c2128); grid.position.y=0.02; scene.add(grid);
+  // ceiling
+  const ceil=new THREE.Mesh(new THREE.PlaneGeometry(ROOMX*2+2,ROOMZ*2+2),mat(0x0e0c0d));
+  ceil.rotation.x=Math.PI/2; ceil.position.y=4.6; scene.add(ceil);
+  // walls
+  const wm=new THREE.MeshStandardMaterial({color:0x1a1416,roughness:.95});
+  const mkWall=(w,h,x,y,z,ry)=>{const m=new THREE.Mesh(new THREE.BoxGeometry(w,h,0.3),wm);m.position.set(x,y,z);m.rotation.y=ry;scene.add(m);};
+  mkWall(ROOMX*2,4.6,0,2.3,-ROOMZ,0); mkWall(ROOMX*2,4.6,0,2.3,ROOMZ,0);
+  mkWall(ROOMZ*2,4.6,-ROOMX,2.3,0,Math.PI/2); mkWall(ROOMZ*2,4.6,ROOMX,2.3,0,Math.PI/2);
+  // crimson baseboard strips
+  const strip=new THREE.MeshStandardMaterial({color:0xd1191e,emissive:0x5a0a0c,emissiveIntensity:.5,roughness:.5});
+  const s1=new THREE.Mesh(new THREE.BoxGeometry(ROOMX*2,0.12,0.05),strip); s1.position.set(0,0.3,-ROOMZ+0.16); scene.add(s1);
+  // back-wall logo plate
+  addLogoPlate(0,2.7,-ROOMZ+0.2);
+  // desks
+  interactables=[]; deskMeshes={};
+  const deskDefs=[
+    {key:'vacant',name:'Vacant Desk',x:-6,z:2,glow:true,type:'usb',label:'Vacant Desk — press E to plug in USB'},
+    {key:'priya',name:'Priya · Finance',x:6,z:-3,type:'wks',mid:'m1',label:'Priya · Finance (WKSTN-07)'},
+    {key:'sam',name:'Sam · IT Support',x:-9,z:-6,type:'wks',mid:'m2',label:'Sam · IT Support (FILESRV-01)'},
+    {key:'divya',name:'Divya · HR',x:9,z:5,type:'occupied',label:'Divya is sitting here — occupied'},
+  ];
+  deskDefs.forEach(d=>addDesk(d));
+  // server room door (far corner)
+  serverDoor=addDoor(ROOMX-0.3,8);
+}
+function addLogoPlate(x,y,z){
+  const cnv=document.createElement('canvas');cnv.width=512;cnv.height=256;const g=cnv.getContext('2d');
+  g.fillStyle='#120d0e';g.fillRect(0,0,512,256);
+  g.fillStyle='#d1191e';g.font='bold 70px Chakra Petch, sans-serif';g.textAlign='center';g.fillText('CyberHub',256,120);
+  g.fillStyle='#f0e9e7';g.font='600 34px Chakra Petch, sans-serif';g.fillText('A  R  E  N  A',256,180);
+  g.strokeStyle='#5a0a0c';g.lineWidth=8;g.strokeRect(10,10,492,236);
+  const tex=new THREE.CanvasTexture(cnv);
+  const plate=new THREE.Mesh(new THREE.PlaneGeometry(6,3),new THREE.MeshBasicMaterial({map:tex}));
+  plate.position.set(x,y,z);scene.add(plate);
+}
+function makeLabel(text,color){
+  const cnv=document.createElement('canvas');cnv.width=512;cnv.height=128;const g=cnv.getContext('2d');
+  g.fillStyle='rgba(14,10,11,.86)';roundRect(g,4,4,504,120,16);g.fill();
+  g.strokeStyle=color||'#36282a';g.lineWidth=4;roundRect(g,4,4,504,120,16);g.stroke();
+  g.fillStyle='#f0e9e7';g.font='600 46px Rajdhani, sans-serif';g.textAlign='center';g.textBaseline='middle';
+  g.fillText(text,256,66);
+  const tex=new THREE.CanvasTexture(cnv);
+  const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:tex,transparent:true,depthTest:false}));
+  sp.scale.set(3.4,0.85,1); return sp;
+}
+function roundRect(g,x,y,w,h,r){g.beginPath();g.moveTo(x+r,y);g.arcTo(x+w,y,x+w,y+h,r);g.arcTo(x+w,y+h,x,y+h,r);g.arcTo(x,y+h,x,y,r);g.arcTo(x,y,x+w,y,r);g.closePath();}
+function addDesk(d){
+  const g=new THREE.Group();
+  const top=new THREE.Mesh(new THREE.BoxGeometry(2.6,0.12,1.3),mat(0x2a2024)); top.position.y=1.0; g.add(top);
+  [[-1.15,-0.5],[1.15,-0.5],[-1.15,0.5],[1.15,0.5]].forEach(([lx,lz])=>{
+    const leg=new THREE.Mesh(new THREE.BoxGeometry(0.1,1,0.1),mat(0x15100f));leg.position.set(lx,0.5,lz);g.add(leg);});
+  // monitor
+  const mon=new THREE.Mesh(new THREE.BoxGeometry(1.1,0.68,0.06),
+    new THREE.MeshStandardMaterial({color:0x0a0a0a,emissive:d.glow?0x8a1416:(d.type==='occupied'?0x12304a:0x203040),emissiveIntensity:d.glow?.9:.5}));
+  mon.position.set(0,1.56,-0.2); g.add(mon);
+  const stand=new THREE.Mesh(new THREE.BoxGeometry(0.1,0.22,0.1),mat(0x15100f));stand.position.set(0,1.2,-0.2);g.add(stand);
+  // chair
+  const chair=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.1,0.7),mat(0x20181a));chair.position.set(0,0.6,0.95);g.add(chair);
+  const back=new THREE.Mesh(new THREE.BoxGeometry(0.7,0.7,0.1),mat(0x20181a));back.position.set(0,0.95,1.28);g.add(back);
+  if(d.type==='occupied'){ // seated person (simple)
+    const body=new THREE.Mesh(new THREE.CapsuleGeometry(0.26,0.5,4,8),mat(0x2b3a52));body.position.set(0,0.95,0.95);g.add(body);
+    const head=new THREE.Mesh(new THREE.SphereGeometry(0.2,16,16),mat(0xc9a88a));head.position.set(0,1.42,0.95);g.add(head);
+  }
+  // glow ring for interactable
+  if(d.type==='usb'){
+    const ring=new THREE.Mesh(new THREE.RingGeometry(1.3,1.6,32),
+      new THREE.MeshBasicMaterial({color:0xd1191e,transparent:true,opacity:.6,side:THREE.DoubleSide}));
+    ring.rotation.x=-Math.PI/2;ring.position.y=0.05;g.add(ring); g.userData.ring=ring;
+  }
+  g.position.set(d.x,0,d.z);
+  // face center
+  g.lookAt(0,0,0);
+  scene.add(g);
+  const label=makeLabel(d.name, d.glow?'#d1191e':'#36282a'); label.position.set(d.x,2.5,d.z); scene.add(label);
+  g.userData={def:d,label}; deskMeshes[d.key]=g;
+  interactables.push({group:g,def:d,x:d.x,z:d.z});
+}
+function addDoor(x,z){
+  const g=new THREE.Group();
+  const frame=new THREE.Mesh(new THREE.BoxGeometry(0.4,3.4,2.4),
+    new THREE.MeshStandardMaterial({color:0x6a0c0e,emissive:0x2a0405,emissiveIntensity:.6,roughness:.6}));
+  frame.position.set(x,1.7,z);g.add(frame);
+  const label=makeLabel('SERVER ROOM · locked','#6a0c0e'); label.position.set(x-0.6,3.4,z); label.scale.set(3.4,0.85,1);
+  scene.add(label); g.userData={label};
+  scene.add(g);
+  interactables.push({group:g,def:{key:'door',type:'door',name:'Server Room'},x:x-0.8,z:z});
+  return g;
+}
+function setObjective(html){ $('#objText').innerHTML=html; }
+function climbIdentity(owned){
+  const id=['intern · <span class="lvl">low-priv</span>','priya@WKSTN-07','sam@FILESRV-01','<span class="lvl" style="color:#ff6b6e">NEXORA\\Administrator · Domain Admin</span>'][owned]||'operator';
+  $('#idText').innerHTML=id;
+}
+function markDeskOwned(key){
+  const g=deskMeshes[key]; if(!g) return;
+  g.traverse(o=>{ if(o.isMesh&&o.material&&o.material.emissive){ o.material=o.material.clone(); o.material.emissive=new THREE.Color(0xd1191e); o.material.emissiveIntensity=.7; } });
+  if(g.userData.label){ g.remove(g.userData.label); }
+  const lab=makeLabel('★ '+g.userData.def.name.split(' · ')[0]+' — OWNED','#d1191e');
+  lab.position.set(g.position.x,2.5,g.position.z); scene.add(lab);
+}
+function unlockServerRoom(){
+  serverUnlocked=true;
+  if(serverDoor){
+    const panel=serverDoor.children[0];
+    panel.material=panel.material.clone();
+    panel.material.emissive=new THREE.Color(0xd1191e); panel.material.emissiveIntensity=1;
+    if(serverDoor.userData.label) scene.remove(serverDoor.userData.label);
+    const nl=makeLabel('SERVER ROOM · OPEN','#d1191e');
+    nl.position.set(panel.position.x-0.6,3.4,panel.position.z); nl.scale.set(3.4,0.85,1);
+    scene.add(nl); serverDoor.userData.label=nl;
+  }
+  toast('🔓 <b>Server Room unlocked</b> — walk to the red door and press E to extract','good');
+}
+function resize(){ if(!renderer)return; const w=$('#range').clientWidth||innerWidth,h=$('#range').clientHeight||innerHeight;
+  renderer.setSize(w,h,false); camera.aspect=w/h; camera.updateProjectionMatrix(); }
+function animate(){
+  raf=requestAnimationFrame(animate);
+  const dt=Math.min(clock.getDelta(),0.05);
+  // movement
+  const speed=(keys['shift']?7.2:3.8)*dt;
+  const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+  const right=new THREE.Vector3(Math.cos(yaw),0,-Math.sin(yaw));
+  const mv=new THREE.Vector3();
+  if(keys['w']||touchMove.f)mv.add(fwd); if(keys['s']||touchMove.b)mv.sub(fwd);
+  if(keys['d']||touchMove.r)mv.add(right); if(keys['a']||touchMove.l)mv.sub(right);
+  if(mv.lengthSq()>0){ mv.normalize().multiplyScalar(speed);
+    let nx=player.pos.x+mv.x, nz=player.pos.z+mv.z;
+    // room bounds
+    nx=Math.max(-ROOMX+0.6,Math.min(ROOMX-0.6,nx)); nz=Math.max(-ROOMZ+0.6,Math.min(ROOMZ-0.6,nz));
+    // desk collision (circle)
+    for(const it of interactables){ const dx=nx-it.x,dz=nz-it.z; if(dx*dx+dz*dz<2.0){ // ~1.4 radius
+        const d=Math.hypot(dx,dz)||1; nx=it.x+dx/d*1.42; nz=it.z+dz/d*1.42; } }
+    player.pos.x=nx; player.pos.z=nz;
+  }
+  camera.position.copy(player.pos);
+  camera.rotation.set(pitch,yaw,0,'YXZ');
+  // interaction check
+  updateInteraction();
+  // ring pulse
+  const t=performance.now()*0.003;
+  interactables.forEach(it=>{ if(it.group.userData.ring){ it.group.userData.ring.material.opacity=0.35+0.3*Math.sin(t); } });
+  renderer.render(scene,camera);
+}
+function updateInteraction(){
+  // nearest interactable in front within range
+  let best=null,bestd=1e9;
+  const fwd=new THREE.Vector3(-Math.sin(yaw),0,-Math.cos(yaw));
+  for(const it of interactables){
+    const to=new THREE.Vector3(it.x-player.pos.x,0,it.z-player.pos.z);
+    const dist=to.length(); if(dist>3.4) continue;
+    to.normalize(); if(to.dot(fwd)<0.55) continue;
+    if(dist<bestd){bestd=dist;best=it;}
+  }
+  curTarget=best;
+  const pi=$('#promptInt');
+  if(best){
+    let txt='Interact';
+    const d=best.def;
+    if(d.type==='usb') txt= footholdDone?'USB already plugged in':'Plug in USB';
+    else if(d.type==='wks'){ const m=SC.machines.find(x=>x.id===d.mid); txt=(m&&m.owned)?(d.name.split(' · ')[0]+' — owned'):'Inspect '+d.name.split(' · ')[0]+'’s workstation'; }
+    else if(d.type==='occupied') txt='Occupied — can’t use';
+    else if(d.type==='door') txt= serverUnlocked?'Enter Server Room & extract':'Locked';
+    $('#promptTxt').textContent=txt; pi.hidden=false;
+  } else pi.hidden=true;
+}
+function interact(){
+  if(!curTarget) return; const d=curTarget.def;
+  if(d.type==='usb'){
+    if(footholdDone){ openConsole(); return; }
+    footholdDone=true; setMs('foothold'); beep(720,.08);
+    // first machine becomes your foothold session automatically
+    const m=SC.machines[0]; m.discovered=true;
+    $('#fabConsole').disabled=false;
+    setObjective('Foothold gained. Open the <b>Ops Console</b> (Tab) and run <b>nmap -sn</b> to map the network.');
+    toast('🔌 <b>USB planted</b> — foothold session live','good');
+    // visually remove glow
+    if(curTarget.group.userData.ring) curTarget.group.userData.ring.visible=false;
+    openConsole();
+    pr('[+] USB payload executed on WKSTN-07 — low-priv session on the range.','ok');
+    pr('    Your Kali IP (LHOST): '+SC.kali,'dim'); pr('',''); hint();
+  } else if(d.type==='wks'){
+    const m=SC.machines.find(x=>x.id===d.mid);
+    openConsole();
+    pr('→ '+d.name+' → host '+ (m?m.name+' ('+m.ip+')':'') +'. Work it from the console: scan, exploit, capture.','teach');
+    if(m&&!m.discovered){ m.discovered=true; renderTargets(); }
+  } else if(d.type==='occupied'){
+    toast('Divya is still at her desk — find a vacant one','');
+  } else if(d.type==='door'){
+    if(serverUnlocked) winRange(); else toast('🔒 Server Room is locked — own all hosts first','');
+  }
+}
+
+/* key handling (range) */
+addEventListener('keydown',e=>{
+  if($('#range').hidden) return;
+  const k=e.key.toLowerCase();
+  if(k==='tab'){ e.preventDefault(); if($('#fabConsole').disabled){toast('Plug in your USB first',''); return;}
+    consoleEl.classList.contains('open')?closeConsole():openConsole(); return; }
+  if(consoleEl.classList.contains('open')) return;
+  if(k==='e'){ interact(); return; }
+  if(['w','a','s','d','shift'].includes(k)) keys[k]=true;
+});
+addEventListener('keyup',e=>{ const k=e.key.toLowerCase(); if(['w','a','s','d','shift'].includes(k)) keys[k]=false; });
+$('#fabConsole').addEventListener('click',()=>{ if(!$('#fabConsole').disabled) openConsole(); });
+$('#rExit').addEventListener('click',()=>{ exitRange(); });
+$('#tEbtn').addEventListener('click',interact);
+$$('.dpad [data-mv]').forEach(b=>{
+  const set=v=>{touchMove[b.dataset.mv]=v;};
+  b.addEventListener('touchstart',e=>{e.preventDefault();set(1);},{passive:false});
+  b.addEventListener('touchend',e=>{e.preventDefault();set(0);},{passive:false});
+  b.addEventListener('mousedown',()=>set(1)); b.addEventListener('mouseup',()=>set(0)); b.addEventListener('mouseleave',()=>set(0));
+});
+function exitRange(){ if(document.pointerLockElement)document.exitPointerLock(); if(raf)cancelAnimationFrame(raf);raf=null; consoleEl.classList.remove('open'); show('dash'); }
+
+/* ============================================================
+   WIN
+   ============================================================ */
+function winRange(){
+  if(document.pointerLockElement)document.exitPointerLock();
+  setMs('extract'); setLabProgress(LAB.id,100);
+  $('#wsMachines').textContent=SC.machines.length;
+  $('#wsFlags').textContent=SC.machines.length;
+  $('#winMsg').textContent='You chained a physical foothold into full Active Directory compromise — recon, scanning, exploitation, privilege escalation and lateral movement, start to finish. Now you know exactly what a defender has to stop.';
+  $('#win').classList.add('open'); beep(660,.12);setTimeout(()=>beep(990,.12),130);setTimeout(()=>beep(1320,.18),260);
+}
+$('#winDash').addEventListener('click',()=>{ $('#win').classList.remove('open'); if(raf)cancelAnimationFrame(raf);raf=null; show('dash'); });
+$('#winReplay').addEventListener('click',()=>{ $('#win').classList.remove('open'); startRange(LAB); });
+
+/* global Esc closes console/quiz */
+addEventListener('keydown',e=>{ if(e.key==='Escape'&&consoleEl.classList.contains('open')&&!document.pointerLockElement){ /* keep console; esc handled by pointerlock */ } });
+
+/* boot */
+show('login');
+</script>
+
+</body>
+</html>
